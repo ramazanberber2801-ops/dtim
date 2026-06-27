@@ -19,8 +19,8 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Vipps deep link — launches the Vipps app directly to the merchant payment screen
-  const vippsDeepLink = `vipps://qr?merchant_serial_number=${settings.vippsNumber}`;
+  // Yenilenen Vipps Linki — Doğrudan ödeme ekranını açar
+  const vippsDeepLink = `vipps://pay?number=${settings.vippsNumber.replace(/\s/g, '')}`;
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
