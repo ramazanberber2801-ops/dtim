@@ -1,0 +1,18 @@
+{
+  "name": "Drammen Türk İnanç Cemiyeti",
+  "short_name": "DTIM",
+  "description": "Norveç Drammen Türk İnanç ve Kültür Derneği",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6F0",
+  "theme_color": "#2D2A26",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
