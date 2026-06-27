@@ -82,3 +82,4 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     </div>
   );
 }
+
