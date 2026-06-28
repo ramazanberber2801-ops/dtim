@@ -12,7 +12,8 @@ interface BottomNavProps {
 export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: BottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#FAF6F0]/95 backdrop-blur-md border-t border-[#C5A880]/20">
-      <div className="max-w-md mx-auto px-4 py-2 pb-[env(safe-area-inset-bottom)]">
+      {/* padding-bottom kısmına pb-3 ekledik ki safe area ile birlikte iPhone'larda tam otursun */}
+      <div className="max-w-md mx-auto px-4 pt-2 pb-3 pb-[env(safe-area-inset-bottom)] relative">
         <div className="flex items-center justify-around relative">
           {/* Ana Sayfa */}
           <button
@@ -65,8 +66,8 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: Bo
           </button>
         </div>
 
-        {/* Secret tap icon - bottom right corner, very subtle */}
-        <div className="absolute bottom-0 right-0">
+        {/* Gizli Kilit Alanı - Sağ alt köşeden yukarı taşıdık ve tıklama alanını rahatlattık */}
+        <div className="absolute bottom-[env(safe-area-inset-bottom)] right-2 mb-2">
           <SecretTapDetector onTrigger={onSecretTrigger} />
         </div>
       </div>
