@@ -15,9 +15,6 @@ export async function fetchPrayerTimes(lat: number, lng: number): Promise<Prayer
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    // Norveç (İskandinavya) için en hassas API ayarları:
-    // latitudeAdjustmentMethod=3 -> Yüksek enlem düzeltmesi
-    // school=0 -> Hanefi (Diyanet standardı)
     const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=${METHOD}&school=0&latitudeAdjustmentMethod=3&timezonestring=Europe/Oslo`;
     
     const response = await fetch(url, { signal: controller.signal });
@@ -38,13 +35,12 @@ export async function fetchPrayerTimes(lat: number, lng: number): Promise<Prayer
 
       return {
         timings: {
-          // İmsak vaktine 28 dakika ekleyerek cami takvimiyle eşitledik
-          Fajr: adjustMinutes(cleanTime(t.Fajr), 28), 
+          Fajr: adjustMinutes(cleanTime(t.Fajr), 28), // Sabah: +28 dk
           Sunrise: cleanTime(t.Sunrise),
           Dhuhr: cleanTime(t.Dhuhr),
           Asr: cleanTime(t.Asr),
           Maghrib: cleanTime(t.Maghrib),
-          Isha: cleanTime(t.Isha),
+          Isha: adjustMinutes(cleanTime(t.Isha), -28), // Yatsı: -28 dk (00:13 -> 23:45)
         },
         hijriDate: `${h.day} ${h.month.en} ${h.year} H`,
         gregorianDate: `${g.day} ${g.month.en} ${g.year}`,
@@ -52,15 +48,11 @@ export async function fetchPrayerTimes(lat: number, lng: number): Promise<Prayer
     }
     throw new Error('Invalid API response');
   } catch (error) {
-    console.error("API Hatası, yedek veriye dönülüyor:", error);
-    // Hata durumunda sistemin çökmemesi için otomatik fallback
     return getFallbackTimes();
   }
 }
 
-// Fallback (Yedek) verileriniz burada aynen kalabilir...
 function getFallbackTimes(): PrayerData {
-  const now = new Date();
   return {
     timings: { Fajr: '02:55', Sunrise: '03:58', Dhuhr: '13:28', Asr: '18:07', Maghrib: '22:50', Isha: '23:45' },
     hijriDate: '15 Muharrem 1448 H',
@@ -86,22 +78,17 @@ export function getNextPrayer(timings: PrayerTimings): { name: string; time: str
   }
   return { name: 'Sabah', time: timings.Fajr };
 }
+
 export function getTimeUntil(timeStr: string): string {
   const now = new Date();
   const clean = timeStr.match(/\d{1,2}:\d{2}/)?.[0] || timeStr;
   const [h, m] = clean.split(':').map(Number);
-
   const target = new Date();
   target.setHours(h, m, 0, 0);
-
-  if (target.getTime() < now.getTime()) {
-    target.setDate(target.getDate() + 1);
-  }
-
+  if (target.getTime() < now.getTime()) target.setDate(target.getDate() + 1);
   const diff = target.getTime() - now.getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
   if (hours > 0) return `${hours} sa ${minutes} dk`;
   return `${minutes} dk`;
 }
