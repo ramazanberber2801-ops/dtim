@@ -53,7 +53,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLoading(true);
 
     try {
-      const [n, s, soh, insp, a] = await Promise.all([
+      const [n, s, soh, insp, a, setRes] = await Promise.all([   supabase.from('news').select('*'),   supabase.from('staff').select('*'),   supabase.from('sohbet').select('*'),   supabase.from('inspiration').select('*').limit(1).maybeSingle(),   supabase.from('admins').select('*'),   supabase.from('settings').select('*').limit(1).maybeSingle() ]);
         supabase.from('news').select('*'),
         supabase.from('staff').select('*'),
         supabase.from('sohbet').select('*'),
@@ -66,6 +66,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (soh.data) setSohbet(soh.data);
       if (insp.data) setInspiration(insp.data);
       if (a.data) setAdmins(a.data);
+      if (setRes.data) {
+  setSettings({
+    id: setRes.data.id,
+    mosqueName: setRes.data.mosque_name || '',
+    shortName: setRes.data.short_name || '',
+    vippsNumber: setRes.data.vipps_number || '',
+    address: setRes.data.address || '',
+    mapUrl: setRes.data.map_url || '',
+    phone: setRes.data.phone || '',
+    whatsappNumber: setRes.data.whatsapp_number || '',
+    bankAccount: setRes.data.bank_account || '',
+    iban: setRes.data.iban || ''
+  });
+}
     } catch (e) {
       console.error('Veri yükleme hatası:', e);
     } finally {
