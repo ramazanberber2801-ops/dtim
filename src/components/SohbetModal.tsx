@@ -43,13 +43,15 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
           </button>
         </div>
 
-        {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1">
-          {item.imageBase64 && (
-            <img
-              src={item.imageBase64}
-              alt={item.title}
-              className="w-full h-auto object-contain block"
+       {/* Scrollable content */}
+<div className="overflow-y-auto flex-1">
+  {(item.imageBase64 || item.image_base64) && (
+    <img
+      src={item.imageBase64 || item.image_base64}
+      alt={item.title}
+      className="w-full h-auto object-contain block"
+    />
+  )}
             />
           )}
 
