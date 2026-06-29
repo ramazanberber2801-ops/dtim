@@ -20,6 +20,7 @@ export interface SelectedCity {
 
 const STORAGE_KEY = 'dtim_selected_city';
 
+// Cihaz kilitlenmesin diye ana üssümüzü net olarak Drammen yapıyoruz
 const DEFAULT_CITY: SelectedCity = {
   name: 'Drammen',
   country: 'Norway',
@@ -32,10 +33,11 @@ function loadStoredCity(): { city: SelectedCity; isAuto: boolean } {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return { city: parsed.city, isAuto: parsed.isAuto };
+      // Hatalı döngüye girmemesi için isAuto'yu zorunlu olarak false döndürüyoruz
+      return { city: parsed.city || DEFAULT_CITY, isAuto: false };
     }
   } catch { /* ignore */ }
-  return { city: DEFAULT_CITY, isAuto: false }; // Varsayılanı otomatik yerine kontrollü false başlatalım
+  return { city: DEFAULT_CITY, isAuto: false }; 
 }
 
 function saveStoredCity(city: SelectedCity, isAuto: boolean) {
@@ -67,13 +69,17 @@ export function useLocation() {
         console.error("Namaz vakitleri alınamadı:", err);
       })
       .finally(() => {
-        setLoading(false); // Hata olsa bile yükleniyor animasyonunu kapatıyoruz
+        setLoading(false);
       });
   }, [city.latitude, city.longitude]);
 
-  // İlk açılışta GPS sorgusu ve hata toleransı
+  // İlk açılışta bozulan API'ye otomatik gitmesini engelliyoruz
   useEffect(() => {
-    if (!isAuto) return;
+    if (!isAuto) {
+      setLoading(false);
+      return;
+    }
+    
     if (!navigator.geolocation) {
       setLoading(false);
       return;
@@ -100,13 +106,13 @@ export function useLocation() {
                 longitude: r.longitude,
               };
               setCity(newCity);
-              saveStoredCity(newCity, true);
+              saveStoredCity(newCity, false); // Tekrar otomatik döngüye girmesin
+              setIsAuto(false);
             } else {
-              throw new Error("Sonuç bulunamadı");
+              throw new Error();
             }
           })
           .catch(() => {
-            // API çökerse koordinatları doğrudan ham haliyle kullan, uygulamayı kilitleme
             const fallbackCity: SelectedCity = {
               name: 'Mevcut Konum',
               country: '',
@@ -114,19 +120,21 @@ export function useLocation() {
               longitude,
             };
             setCity(fallbackCity);
-            saveStoredCity(fallbackCity, true);
+            saveStoredCity(fallbackCity, false);
+            setIsAuto(false);
+          })
+          .finally(() => {
+            setLoading(false);
           });
       },
       () => {
-        // GPS izni reddedilirse Drammen'e güvenli geçiş yap ve kilidi aç
         setCity(DEFAULT_CITY);
         setIsAuto(false);
         setLoading(false);
       },
-      { timeout: 5000, enableHighAccuracy: false }
+      { timeout: 4000, enableHighAccuracy: false }
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuto]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -173,57 +181,7 @@ export function useLocation() {
 
   const resetToAuto = useCallback(() => {
     setIsAuto(true);
-    setShowSelector(false);
-    setSearchQuery('');
-    setSearchResults([]);
     setLoading(true);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          fetch(
-            `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=tr&count=1`
-          )
-            .then(res => res.json())
-            .then(data => {
-              if (data?.results?.[0]) {
-                const r = data.results[0];
-                const newCity: SelectedCity = {
-                  name: r.name,
-                  country: r.country ?? '',
-                  latitude: r.latitude,
-                  longitude: r.longitude,
-                };
-                setCity(newCity);
-                saveStoredCity(newCity, true);
-              } else {
-                throw new Error();
-              }
-            })
-            .catch(() => {
-              const fallbackCity: SelectedCity = {
-                name: 'Mevcut Konum',
-                country: '',
-                latitude,
-                longitude,
-              };
-              setCity(fallbackCity);
-              saveStoredCity(fallbackCity, true);
-            });
-        },
-        () => {
-          setCity(DEFAULT_CITY);
-          setIsAuto(false);
-          setLoading(false);
-        },
-        { timeout: 5000, enableHighAccuracy: false }
-      );
-    } else {
-      setCity(DEFAULT_CITY);
-      setIsAuto(false);
-      setLoading(false);
-    }
   }, []);
 
   return {
