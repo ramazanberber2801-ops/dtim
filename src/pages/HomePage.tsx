@@ -36,6 +36,9 @@ export function HomePage() {
   useEffect(() => {
     async function fetchDailyInspiration() {
       try {
+        // TypeScript için supabase null koruması eklendi
+        if (!supabase) return;
+
         const start = new Date(new Date().getFullYear(), 0, 0);
         const diff = new Date().getTime() - start.getTime();
         const oneDay = 1000 * 60 * 60 * 24;
