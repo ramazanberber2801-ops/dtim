@@ -35,7 +35,7 @@ function loadStoredCity(): { city: SelectedCity; isAuto: boolean } {
       return { city: parsed.city, isAuto: parsed.isAuto };
     }
   } catch { /* ignore */ }
-  return { city: DEFAULT_CITY, isAuto: true };
+  return { city: DEFAULT_CITY, isAuto: false }; // Varsayılanı otomatik yerine kontrollü false başlatalım
 }
 
 function saveStoredCity(city: SelectedCity, isAuto: boolean) {
@@ -56,28 +56,40 @@ export function useLocation() {
   const [searching, setSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch prayer times whenever city changes
+  // Namaz vakitlerini getiren ana fonksiyon
   useEffect(() => {
     setLoading(true);
-    fetchPrayerTimes(city.latitude, city.longitude).then(data => {
-      setPrayerData(data);
-      setLoading(false);
-    });
+    fetchPrayerTimes(city.latitude, city.longitude)
+      .then(data => {
+        setPrayerData(data);
+      })
+      .catch((err) => {
+        console.error("Namaz vakitleri alınamadı:", err);
+      })
+      .finally(() => {
+        setLoading(false); // Hata olsa bile yükleniyor animasyonunu kapatıyoruz
+      });
   }, [city.latitude, city.longitude]);
 
-  // Try to get auto location on first mount if isAuto
+  // İlk açılışta GPS sorgusu ve hata toleransı
   useEffect(() => {
     if (!isAuto) return;
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setLoading(false);
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Reverse geocode using Open-Meteo
+        
         fetch(
           `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=tr&count=1`
         )
-          .then(res => res.json())
+          .then(res => {
+            if (!res.ok) throw new Error("CORS veya Sunucu Hatası");
+            return res.json();
+          })
           .then(data => {
             if (data?.results?.[0]) {
               const r = data.results[0];
@@ -90,25 +102,28 @@ export function useLocation() {
               setCity(newCity);
               saveStoredCity(newCity, true);
             } else {
-              // Use raw coordinates if reverse geocode fails
-              const newCity: SelectedCity = {
-                name: 'Mevcut Konum',
-                country: '',
-                latitude,
-                longitude,
-              };
-              setCity(newCity);
-              saveStoredCity(newCity, true);
+              throw new Error("Sonuç bulunamadı");
             }
           })
           .catch(() => {
-            // Keep default city if reverse geocode fails
+            // API çökerse koordinatları doğrudan ham haliyle kullan, uygulamayı kilitleme
+            const fallbackCity: SelectedCity = {
+              name: 'Mevcut Konum',
+              country: '',
+              latitude,
+              longitude,
+            };
+            setCity(fallbackCity);
+            saveStoredCity(fallbackCity, true);
           });
       },
       () => {
-        // Keep default city if geolocation denied
+        // GPS izni reddedilirse Drammen'e güvenli geçiş yap ve kilidi aç
+        setCity(DEFAULT_CITY);
+        setIsAuto(false);
+        setLoading(false);
       },
-      { timeout: 8000, enableHighAccuracy: false }
+      { timeout: 5000, enableHighAccuracy: false }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -161,8 +176,8 @@ export function useLocation() {
     setShowSelector(false);
     setSearchQuery('');
     setSearchResults([]);
+    setLoading(true);
 
-    // Try geolocation again
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -182,20 +197,32 @@ export function useLocation() {
                 };
                 setCity(newCity);
                 saveStoredCity(newCity, true);
+              } else {
+                throw new Error();
               }
             })
-            .catch(() => {});
+            .catch(() => {
+              const fallbackCity: SelectedCity = {
+                name: 'Mevcut Konum',
+                country: '',
+                latitude,
+                longitude,
+              };
+              setCity(fallbackCity);
+              saveStoredCity(fallbackCity, true);
+            });
         },
         () => {
-          // Fall back to default
           setCity(DEFAULT_CITY);
-          saveStoredCity(DEFAULT_CITY, true);
+          setIsAuto(false);
+          setLoading(false);
         },
-        { timeout: 8000, enableHighAccuracy: false }
+        { timeout: 5000, enableHighAccuracy: false }
       );
     } else {
       setCity(DEFAULT_CITY);
-      saveStoredCity(DEFAULT_CITY, true);
+      setIsAuto(false);
+      setLoading(false);
     }
   }, []);
 
