@@ -11,7 +11,7 @@ import { useLocation } from '../lib/useLocation';
 import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
-import { supabase } from '../lib/supabaseClient'; // Supabase bağlantısı
+import { supabase } from '../lib/supabaseClient'; 
 import type { NewsItem, SohbetItem } from '../types';
 
 export function HomePage() {
@@ -36,13 +36,12 @@ export function HomePage() {
   useEffect(() => {
     async function fetchDailyInspiration() {
       try {
-        // Zaman dilimi kaymalarını önleyen kesin gün hesaplama yöntemi
-        const simdi = new Date();
-        const baslangic = new Date(simdi.getFullYear(), 0, 1);
-        const fark = simdi.getTime() - baslangic.getTime();
-        const birGun = 1000 * 60 * 60 * 24;
-        const dayOfYear = Math.floor(fark / birGun) + 1;
+        const start = new Date(new Date().getFullYear(), 0, 0);
+        const diff = new Date().getTime() - start.getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
 
+        // Tablo adı 'inspiration' olarak düzeltildi
         const { data, error } = await supabase
           .from('inspiration')
           .select('verse_text, verse_reference, hadith_text, hadith_source')
@@ -51,15 +50,15 @@ export function HomePage() {
         
         if (!error && data) {
           setDailyData(data);
-        } else {
-          console.log("Supabase verisi bulunamadı veya hata:", error);
+        } else if (error) {
+          console.error("Supabase veri çekme hatası:", error.message);
         }
       } catch (err) {
         console.error("Ayet/Hadis yüklenirken hata oluştu:", err);
       }
     }
     fetchDailyInspiration();
-  }, [now.getDate()]); // Gün değiştiğinde otomatik yenilenir
+  }, [now.getDate()]);
 
   const nextPrayer = prayerData ? getNextPrayer(prayerData.timings) : null;
   const timeUntil = nextPrayer ? getTimeUntil(nextPrayer.time) : null;
@@ -245,7 +244,7 @@ export function HomePage() {
 
       <InstallAppButton />
 
-      {/* ===== Günlük Ayet / Hadit Veritabanı Alanı ===== */}
+      {/* ===== Günlük Ayet / Hadis Alanı ===== */}
       {dailyData && (
         <section className="px-4 mt-4">
           <div className="bg-[#2D2A26] rounded-xl border-2 border-[#2D2A26] shadow-md relative overflow-hidden">
