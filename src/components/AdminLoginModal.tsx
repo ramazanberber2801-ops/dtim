@@ -1,296 +1,147 @@
-import { useState, type FormEvent } from 'react';
-import { Eye, EyeOff, X, KeyRound, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { RECOVERY_ANSWER } from '../lib/constants';
-import type { AdminView } from '../types';
+import { X, Lock, User, Shield, AlertCircle, Loader2 } from 'lucide-react';
 
 interface AdminLoginModalProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
 }
 
-export function AdminLoginModal({ open, onClose, onSuccess }: AdminLoginModalProps) {
-  const { login, updateAdminPassword } = useApp();
-  const [view, setView] = useState<AdminView>('login');
+export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClose }) => {
+  const { login } = useApp();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-  const [recoveryAnswer, setRecoveryAnswer] = useState('');
-  const [newPassword, setNewPasswordState] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [role, setRole] = useState('admin');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  if (!open) return null;
+  if (!isOpen) return null;
 
-  const reset = () => {
-    setView('login');
-    setUsername('');
-    setPassword('');
-    setRecoveryAnswer('');
-    setNewPasswordState('');
-    setConfirmPassword('');
-    setError('');
-    setShowPassword(false);
-    setShowNewPassword(false);
-  };
-
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
-
-  const handleLogin = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(false);
 
-    if (!username.trim()) {
-      setError('Lütfen kullanıcı adınızı girin.');
+    if (!username.trim() || !password.trim()) {
+      setError('Lütfen tüm alanları doldurun.');
       return;
     }
 
-    if (login(username, password, rememberMe)) {
-      reset();
-      onSuccess();
-    } else {
-      setError('Kullanıcı adı veya şifre hatalı.');
-    }
-  };
-
-  const handleRecovery = (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (recoveryAnswer.trim().toLowerCase() === RECOVERY_ANSWER) {
-      setView('resetPassword');
-    } else {
-      setError('Cevap yanlış. Lütfen tekrar deneyin.');
-    }
-  };
-
-  const handleResetPassword = (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (newPassword.length < 6) {
-      setError('Şifre en az 6 karakter olmalıdır.');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Şifreler eşleşmiyor.');
-      return;
-    }
-
-    // Reset the superadmin password
-    updateAdminPassword('Ramazan', newPassword);
-
-    // Auto-login with new password (use rememberMe state)
-    if (login('Ramazan', newPassword, rememberMe)) {
-      reset();
-      onSuccess();
-    } else {
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+    try {
+      setLoading(true);
+      // TS2801 hatasını engellemek için doğrudan fonksiyonun kendisini değil, 
+      // döndürdüğü sonucu (result) bir değişkene atayıp onu kontrol ediyoruz.
+      const success = await login(username, password, role);
+      
+      if (success) {
+        setUsername('');
+        setPassword('');
+        onClose();
+      } else {
+        setError('Hatalı kullanıcı adı veya şifre!');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Giriş yapılırken bir hata oluştu.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-[#2D2A26]/60 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-md bg-[#FAF6F0] rounded-2xl shadow-2xl border-2 border-[#C5A880]/30 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b-2 border-[#C5A880]/20">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-[#FAF6F0] w-full max-w-md rounded-2xl shadow-2xl border-2 border-[#C5A880]/30 overflow-hidden transform transition-all scale-100">
+        <div className="bg-[#2D2A26] px-5 py-4 flex items-center justify-between border-b-2 border-[#C5A880]/20">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-[#C5A880]/15 flex items-center justify-center">
-              {view === 'login' && <ShieldCheck size={18} className="text-[#C5A880]" />}
-              {(view === 'recovery' || view === 'resetPassword') && <KeyRound size={18} className="text-[#C5A880]" />}
-            </div>
-            <h2 className="font-serif text-lg text-[#2D2A26]">
-              {view === 'login' && 'Yönetici Girişi'}
-              {view === 'recovery' && 'Şifre Sıfırlama'}
-              {view === 'resetPassword' && 'Yeni Şifre Belirle'}
-            </h2>
+            <Shield size={18} className="text-[#C5A880]" />
+            <h2 className="font-serif text-base text-[#FAF6F0]">Yönetici Girişi</h2>
           </div>
-          <button
-            onClick={handleClose}
-            className="w-8 h-8 rounded-full hover:bg-[#C5A880]/15 flex items-center justify-center transition-colors"
-            aria-label="Kapat"
-          >
-            <X size={18} className="text-[#2D2A26]/60" />
+          <button onClick={onClose} className="text-[#FAF6F0]/60 hover:text-[#FAF6F0] transition-colors p-1 rounded-lg hover:bg-white/5">
+            <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6">
-          {view === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[#2D2A26]/70 mb-1.5">
-                  Kullanıcı Adı
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
-                  placeholder="Kullanıcı adınız"
-                  autoFocus
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2 text-red-600 text-xs animate-shake">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <p className="font-medium">{error}</p>
+            </div>
+          )}
 
-              <div>
-                <label className="block text-sm font-medium text-[#2D2A26]/70 mb-1.5">
-                  Şifre
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 rounded-lg bg-white border border-[#C5A880]/30 text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D2A26]/40 hover:text-[#C5A880] transition-colors"
-                    aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Beni Hatırla Checkbox */}
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={rememberMe}
-                  onClick={() => setRememberMe(!rememberMe)}
-                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${
-                    rememberMe
-                      ? 'bg-[#C5A880] border-[#C5A880]'
-                      : 'bg-white border-[#C5A880]/30'
-                  }`}
-                >
-                  {rememberMe && (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-                <span className="text-sm text-[#2D2A26]/70">Beni Hatırla</span>
-              </label>
-
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
-              )}
-
-              <button
-                type="submit"
-                className="w-full py-3 rounded-lg bg-[#2D2A26] text-[#FAF6F0] font-medium hover:bg-[#2D2A26]/90 transition-colors"
-              >
-                Giriş Yap
-              </button>
-
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[#2D2A26]/60 uppercase tracking-wider">Kullanıcı Tipi</label>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => { setView('recovery'); setError(''); }}
-                className="w-full text-sm text-[#C5A880] hover:text-[#C5A880]/80 transition-colors"
+                onClick={() => setRole('admin')}
+                className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all ${
+                  role === 'admin'
+                    ? 'bg-[#2D2A26] text-[#FAF6F0] border-[#2D2A26] shadow-sm'
+                    : 'bg-white text-[#2D2A26]/70 border-[#C5A880]/20 hover:bg-[#C5A880]/5'
+                }`}
               >
-                Şifremi Unuttum
+                Yönetici
               </button>
-            </form>
-          )}
-
-          {view === 'recovery' && (
-            <form onSubmit={handleRecovery} className="space-y-4">
-              <div className="bg-[#C5A880]/10 rounded-lg p-3">
-                <p className="text-sm text-[#2D2A26]/70">Güvenlik sorusu:</p>
-                <p className="text-sm font-medium text-[#2D2A26] mt-1">İlk evcil hayvanımın ismi?</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#2D2A26]/70 mb-1.5">Cevabınız</label>
-                <input
-                  type="text"
-                  value={recoveryAnswer}
-                  onChange={(e) => setRecoveryAnswer(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
-                  placeholder="Cevabınızı girin"
-                  autoFocus
-                />
-              </div>
-
-              {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-
-              <button type="submit" className="w-full py-3 rounded-lg bg-[#2D2A26] text-[#FAF6F0] font-medium hover:bg-[#2D2A26]/90 transition-colors">
-                Doğrula
+              <button
+                type="button"
+                onClick={() => setRole('superadmin')}
+                className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all ${
+                  role === 'superadmin'
+                    ? 'bg-[#2D2A26] text-[#FAF6F0] border-[#2D2A26] shadow-sm'
+                    : 'bg-white text-[#2D2A26]/70 border-[#C5A880]/20 hover:bg-[#C5A880]/5'
+                }`}
+              >
+                Süper Admin
               </button>
+            </div>
+          </div>
 
-              <button type="button" onClick={() => { setView('login'); setError(''); }} className="w-full text-sm text-[#2D2A26]/50 hover:text-[#2D2A26]/70 transition-colors">
-                Geri Dön
-              </button>
-            </form>
-          )}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[#2D2A26]/60 uppercase tracking-wider">Kullanıcı Adı</label>
+            <div className="relative">
+              <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2D2A26]/40" />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Kullanıcı adınızı girin"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
+                disabled={loading}
+              />
+            </div>
+          </div>
 
-          {view === 'resetPassword' && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div className="bg-green-50 rounded-lg p-3">
-                <p className="text-sm text-green-700">Doğrulama başarılı! Lütfen yeni şifrenizi belirleyin.</p>
-              </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[#2D2A26]/60 uppercase tracking-wider">Şifre</label>
+            <div className="relative">
+              <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2D2A26]/40" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
+                disabled={loading}
+              />
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#2D2A26]/70 mb-1.5">Yeni Şifre</label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPasswordState(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 rounded-lg bg-white border border-[#C5A880]/30 text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
-                    placeholder="En az 6 karakter"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D2A26]/40 hover:text-[#C5A880] transition-colors"
-                    aria-label={showNewPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                  >
-                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#2D2A26]/70 mb-1.5">Şifre Tekrar</label>
-                <input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition-colors"
-                  placeholder="Şifreyi tekrar girin"
-                />
-              </div>
-
-              {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-
-              <button type="submit" className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium hover:bg-[#C5A880]/90 transition-colors">
-                Şifreyi Güncelle ve Giriş Yap
-              </button>
-            </form>
-          )}
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#C5A880] hover:bg-[#B8935A] text-white py-3 rounded-xl font-medium text-sm transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Giriş Yapılıyor...
+              </>
+            ) : (
+              'Giriş Yap'
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
-}
+};
