@@ -1,8 +1,23 @@
 import { useState, useEffect } from 'react';
 import {
-  Calendar, Clock, MapPin, ChevronRight, Newspaper,
-  BookOpen, Sun, Moon, Sunrise, Sunset, CloudSun,
-  Mic, User, Crosshair, Navigation, ChevronDown, Check, Search, Loader2,
+  Calendar,
+  MapPin,
+  ChevronRight,
+  Newspaper,
+  BookOpen,
+  Sun,
+  Moon,
+  Sunrise,
+  Sunset,
+  CloudSun,
+  Mic,
+  User,
+  Crosshair,
+  ChevronDown,
+  Check,
+  Search,
+  Loader2,
+  Clock,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getNextPrayer, getTimeUntil } from '../lib/prayerTimes';
@@ -14,87 +29,355 @@ import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
 import type { NewsItem, SohbetItem } from '../types';
 
+type NewsWithDbImage = NewsItem & { image_base64?: string };
+type SohbetWithDbImage = SohbetItem & { image_base64?: string };
+
 export function HomePage() {
   const { news, sohbet, settings } = useApp();
-  const [dailyData, setDailyData] = useState<any>(null);
+
+  const [dailyData, setDailyData] = useState<{
+    verse_text?: string;
+    verse_reference?: string;
+    hadith_text?: string;
+    hadith_source?: string;
+  } | null>(null);
 
   const now = useClock();
+
   const {
-    city, isAuto, loading, prayerData, showSelector,
-    setShowSelector, searchQuery, searchResults, searching,
-    handleSearch, selectCity,
+    city,
+    isAuto,
+    loading,
+    prayerData,
+    showSelector,
+    setShowSelector,
+    searchQuery,
+    searchResults,
+    searching,
+    handleSearch,
+    selectCity,
+    resetToAuto,
   } = useLocation();
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-  const [selectedSohbet, setSelectedSohbet] = useState<SohbetItem | null>(null);
+
+  const [selectedNews, setSelectedNews] = useState<NewsWithDbImage | null>(null);
+  const [selectedSohbet, setSelectedSohbet] = useState<SohbetWithDbImage | null>(null);
 
   useEffect(() => {
     async function fetchDailyInspiration() {
-      if (!supabase) return;
-      const start = new Date(new Date().getFullYear(), 0, 0);
-      const diff = new Date().getTime() - start.getTime();
-      const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+      try {
+        if (!supabase) return;
 
-      const { data } = await supabase
-        .from('inspiration')
-        .select('*')
-        .eq('day_of_year', dayOfYear)
-        .maybeSingle();
-      if (data) setDailyData(data);
+        const start = new Date(new Date().getFullYear(), 0, 0);
+        const diff = new Date().getTime() - start.getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+
+        const { data, error } = await supabase
+          .from('inspiration')
+          .select('verse_text, verse_reference, hadith_text, hadith_source')
+          .eq('day_of_year', dayOfYear)
+          .single();
+
+        if (!error && data) {
+          setDailyData(data);
+        }
+      } catch (err) {
+        console.error('Ayet/Hadis yüklenirken hata oluştu:', err);
+      }
     }
+
     fetchDailyInspiration();
-  }, []);
+  }, [now.getDate()]);
 
   const nextPrayer = prayerData ? getNextPrayer(prayerData.timings) : null;
-  const prayerItems = prayerData ? [
-    { name: 'Sabah', time: prayerData.timings.Fajr, icon: Sunrise, color: '#C5A880' },
-    { name: 'Güneş', time: prayerData.timings.Sunrise, icon: Sun, color: '#E8B86D' },
-    { name: 'Öğle', time: prayerData.timings.Dhuhr, icon: CloudSun, color: '#D4A04C' },
-    { name: 'İkindi', time: prayerData.timings.Asr, icon: Sun, color: '#C5A880' },
-    { name: 'Akşam', time: prayerData.timings.Maghrib, icon: Sunset, color: '#B8935A' },
-    { name: 'Yatsı', time: prayerData.timings.Isha, icon: Moon, color: '#8B7355' },
-  ] : [];
+  const timeUntil = nextPrayer ? getTimeUntil(nextPrayer.time) : null;
 
-  const featuredNews = news.slice(0, 6);
-  const upcomingSohbet = (sohbet || []).slice(0, 4);
+  const prayerItems = prayerData
+    ? [
+        { name: 'Sabah', time: prayerData.timings.Fajr, icon: Sunrise, color: '#C5A880' },
+        { name: 'Güneş', time: prayerData.timings.Sunrise, icon: Sun, color: '#E8B86D' },
+        { name: 'Öğle', time: prayerData.timings.Dhuhr, icon: CloudSun, color: '#D4A04C' },
+        { name: 'İkindi', time: prayerData.timings.Asr, icon: Sun, color: '#C5A880' },
+        { name: 'Akşam', time: prayerData.timings.Maghrib, icon: Sunset, color: '#B8935A' },
+        { name: 'Yatsı', time: prayerData.timings.Isha, icon: Moon, color: '#8B7355' },
+      ]
+    : [];
+
+  const featuredNews = (news || []).slice(0, 6) as NewsWithDbImage[];
+  const upcomingSohbet = (sohbet || []).slice(0, 4) as SohbetWithDbImage[];
 
   return (
     <div className="min-h-screen pb-28">
       <header className="bg-[#2D2A26] text-[#FAF6F0] sticky top-0 z-30 shadow-md">
-        <div className="max-w-md mx-auto px-4 py-3">
-          <h1 className="font-serif text-base">{settings.mosqueName}</h1>
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2.5">
+          <img src="/images/dtim-logo.svg" alt="DTIM" className="w-10 h-10 shrink-0 rounded-lg" />
+          <div className="min-w-0">
+            <h1 className="font-serif text-base leading-tight truncate">
+              {settings?.mosqueName || 'Drammen Türk İnanç Cemiyeti'}
+            </h1>
+            <p className="text-[10px] text-[#C5A880] uppercase tracking-wider">
+              {settings?.shortName || 'Norveç · Drammen'}
+            </p>
+          </div>
         </div>
       </header>
 
-      {/* Sohbetler Bölümü */}
-      <section className="px-4 mt-5">
-        <h2 className="font-serif text-lg mb-3">Sohbetler & Dersler</h2>
-        <div className="space-y-2.5">
-          {upcomingSohbet.map((item: any) => (
-            <button key={item.id} onClick={() => setSelectedSohbet(item)} className="w-full bg-white rounded-xl border border-[#C5A880]/20 p-2 flex items-center">
-              <div className="w-16 h-16 bg-[#C5A880]/10 rounded-lg flex items-center justify-center">
-                <BookOpen size={20} className="text-[#C5A880]" />
-              </div>
-              <div className="pl-3 text-left">
-                <h3 className="font-serif text-sm">{item.title}</h3>
-              </div>
+      <section className="px-4 pt-4">
+        <div className="bg-white rounded-xl shadow-md border-2 border-[#C5A880]/25 overflow-hidden">
+          <div className="bg-[#2D2A26] px-4 py-2.5 flex items-center justify-between relative">
+            <div className="flex items-center gap-1.5">
+              {isAuto ? (
+                <Crosshair size={13} className="text-[#C5A880] shrink-0" />
+              ) : (
+                <MapPin size={13} className="text-[#C5A880] shrink-0" />
+              )}
+
+              <span className="text-xs font-medium text-[#FAF6F0] truncate max-w-[140px]">
+                {city.name}
+                {city.country ? `, ${city.country}` : ''}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setShowSelector(!showSelector)}
+              className="flex items-center gap-1 text-[10px] text-[#C5A880] hover:text-[#FAF6F0] transition-colors shrink-0"
+            >
+              Değiştir
+              <ChevronDown size={11} className={`transition-transform ${showSelector ? 'rotate-180' : ''}`} />
             </button>
-          ))}
+
+            {showSelector && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#FAF6F0] rounded-b-xl shadow-2xl border-2 border-t-0 border-[#C5A880]/30 overflow-hidden z-20">
+                <div className="p-3 space-y-3">
+                  <div className="relative">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2D2A26]/30" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      placeholder="Şehir Ara..."
+                      className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm focus:outline-none focus:border-[#C5A880]"
+                    />
+                    {searching && (
+                      <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#C5A880] animate-spin" />
+                    )}
+                  </div>
+
+                  {searchResults.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => selectCity(r)}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-left border-b border-[#C5A880]/10 last:border-b-0"
+                    >
+                      <MapPin size={13} className="text-[#C5A880]" />
+                      <div className="min-w-0">
+                        <p className="text-xs truncate">{r.name}</p>
+                      </div>
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={resetToAuto}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-[#C5A880]/10 rounded-lg"
+                  >
+                    <Crosshair size={13} className="text-[#C5A880]" />
+                    <span className="text-xs text-[#2D2A26]">Konumumu Bul</span>
+                    {isAuto && <Check size={13} className="ml-auto text-[#C5A880]" />}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {nextPrayer && (
+            <div className="bg-[#C5A880]/10 border-b-2 border-[#C5A880]/20 px-4 py-2 flex items-center justify-between">
+              <span className="text-[11px] text-[#2D2A26]/70">
+                Sıradaki: <strong>{nextPrayer.name}</strong>
+              </span>
+              <span className="text-[10px] bg-[#C5A880] text-white px-2 py-0.5 rounded-full">
+                {timeUntil}
+              </span>
+            </div>
+          )}
+
+          <div className="p-2.5">
+            {loading ? (
+              <p className="text-center text-xs text-[#2D2A26]/50 py-4">Namaz vakitleri yükleniyor...</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-1.5">
+                {prayerItems.map((p) => {
+                  const Icon = p.icon;
+                  const isNext = nextPrayer?.name === p.name;
+
+                  return (
+                    <div
+                      key={p.name}
+                      className={`rounded-lg p-2 text-center border-2 ${
+                        isNext
+                          ? 'bg-[#2D2A26] border-[#C5A880]'
+                          : 'bg-[#FAF6F0] border-[#C5A880]/20'
+                      }`}
+                    >
+                      <Icon
+                        size={14}
+                        className="mx-auto mb-1"
+                        style={{ color: isNext ? '#C5A880' : p.color }}
+                      />
+                      <p className={`text-[10px] ${isNext ? 'text-[#FAF6F0]/60' : 'text-[#2D2A26]/60'}`}>
+                        {p.name}
+                      </p>
+                      <p className={`text-xs font-semibold ${isNext ? 'text-[#FAF6F0]' : 'text-[#2D2A26]'}`}>
+                        {p.time}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Haberler Bölümü */}
+      <InstallAppButton />
+
+      {dailyData && (
+        <section className="px-4 mt-4">
+          <div className="bg-[#2D2A26] rounded-xl p-5 text-[#FAF6F0]">
+            {dailyData.verse_text && (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen size={14} className="text-[#C5A880]" />
+                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Günün Ayeti</h3>
+                </div>
+                <p className="text-sm mb-4">{dailyData.verse_text}</p>
+              </>
+            )}
+
+            {dailyData.hadith_text && (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen size={14} className="text-[#C5A880]" />
+                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Günün Hadisi</h3>
+                </div>
+                <p className="text-sm">{dailyData.hadith_text}</p>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       <section className="px-4 mt-5">
-        <h2 className="font-serif text-lg mb-3">Haberler</h2>
-        <div className="space-y-2.5">
-          {featuredNews.map((item) => (
-            <button key={item.id} onClick={() => setSelectedNews(item)} className="w-full bg-white rounded-xl border border-[#C5A880]/20 p-2 flex">
-              <img src={item.imageBase64 || item.image_base64 || ''} className="w-16 h-16 object-cover rounded-lg" alt="" />
-              <div className="pl-3 text-left">
-                <h3 className="font-serif text-sm">{item.title}</h3>
-              </div>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 mb-3">
+          <Mic size={18} className="text-[#C5A880]" />
+          <h2 className="font-serif text-lg text-[#2D2A26]">Yaklaşan Sohbet / Ders</h2>
         </div>
+
+        {upcomingSohbet.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center border border-[#C5A880]/20">
+            <Mic size={28} className="mx-auto text-[#C5A880]/40 mb-2" />
+            <p className="text-sm text-[#2D2A26]/50">Yaklaşan program bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {upcomingSohbet.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setSelectedSohbet(item)}
+                className="w-full bg-white rounded-xl border border-[#C5A880]/20 flex text-left overflow-hidden"
+              >
+                <div className="w-16 shrink-0 bg-[#2D2A26] flex flex-col items-center justify-center text-[#FAF6F0] py-3">
+                  <span className="text-[10px] uppercase text-[#C5A880]">
+                    {new Date(item.date).toLocaleDateString('tr-TR', { month: 'short' })}
+                  </span>
+                  <span className="font-serif text-xl leading-none">
+                    {new Date(item.date).getDate()}
+                  </span>
+                  <span className="text-[10px] text-[#FAF6F0]/60 mt-0.5">
+                    {item.time}
+                  </span>
+                </div>
+
+                <div className="flex-1 p-3 min-w-0">
+                  <h3 className="font-serif text-sm text-[#2D2A26] line-clamp-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-[#2D2A26]/50 mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="flex items-center gap-1 text-[10px] text-[#2D2A26]/40">
+                      <MapPin size={10} />
+                      {item.location}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-[#2D2A26]/40">
+                      <User size={10} />
+                      {item.speaker}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center pr-3">
+                  <ChevronRight size={18} className="text-[#C5A880]/40" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="px-4 mt-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Newspaper size={18} className="text-[#C5A880]" />
+          <h2 className="font-serif text-lg text-[#2D2A26]">Haberler & Duyurular</h2>
+        </div>
+
+        {featuredNews.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center border border-[#C5A880]/20">
+            <Newspaper size={28} className="mx-auto text-[#C5A880]/40 mb-2" />
+            <p className="text-sm text-[#2D2A26]/50">Henüz haber eklenmemiş.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {featuredNews.map((item) => {
+              const imageSrc = item.imageBase64 || item.image_base64;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedNews(item)}
+                  className="w-full bg-white rounded-xl border border-[#C5A880]/20 flex text-left p-2"
+                >
+                  {imageSrc ? (
+                    <div className="w-20 h-20 shrink-0 overflow-hidden rounded-lg">
+                      <img src={imageSrc} alt={item.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 shrink-0 bg-[#C5A880]/10 rounded-lg flex items-center justify-center">
+                      <Newspaper size={20} className="text-[#C5A880]/40" />
+                    </div>
+                  )}
+
+                  <div className="pl-3 py-1 min-w-0">
+                    <span className="inline-block text-[9px] font-semibold text-[#C5A880] uppercase tracking-wider bg-[#C5A880]/10 px-1.5 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                    <h3 className="font-serif text-sm line-clamp-2 mt-1">{item.title}</h3>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{item.content}</p>
+                    <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#2D2A26]/40">
+                      <Calendar size={10} />
+                      {new Date(item.date).toLocaleDateString('tr-TR', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <NewsModal item={selectedNews} onClose={() => setSelectedNews(null)} />
