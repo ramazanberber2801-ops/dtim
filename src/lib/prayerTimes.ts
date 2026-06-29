@@ -86,3 +86,22 @@ export function getNextPrayer(timings: PrayerTimings): { name: string; time: str
   }
   return { name: 'Sabah', time: timings.Fajr };
 }
+export function getTimeUntil(timeStr: string): string {
+  const now = new Date();
+  const clean = timeStr.match(/\d{1,2}:\d{2}/)?.[0] || timeStr;
+  const [h, m] = clean.split(':').map(Number);
+
+  const target = new Date();
+  target.setHours(h, m, 0, 0);
+
+  if (target.getTime() < now.getTime()) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  const diff = target.getTime() - now.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 0) return `${hours} sa ${minutes} dk`;
+  return `${minutes} dk`;
+}
