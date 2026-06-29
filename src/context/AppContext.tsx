@@ -1,18 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-interface DailyData {
-  verse_text: string | null;
-  verse_reference: string | null;
-  hadith_text: string | null;
-  hadith_source: string | null;
-}
-
 interface AppContextType {
-  dailyData: DailyData | null;
-  loading: boolean;
-  isAdmin: boolean;
-  isInitialized: boolean;
   news: any[];
   staff: any[];
   sohbet: any[];
@@ -20,8 +9,8 @@ interface AppContextType {
   inspiration: any;
   admins: any[];
   currentAdmin: any | null;
-  fetchInspiration: () => Promise<void>;
-  login: (...args: any[]) => Promise<boolean>; // Her türlü çağrıyı kabul edecek esnek yapıya alındı
+  loading: boolean;
+  login: (u: string, p: string, r: string) => Promise<boolean>;
   logout: () => void;
   addNews: (item: any) => Promise<void>;
   updateNews: (id: string, item: any) => Promise<void>;
@@ -33,8 +22,8 @@ interface AppContextType {
   updateSohbet: (id: string, item: any) => Promise<void>;
   deleteSohbet: (id: string) => Promise<void>;
   updateSettings: (settings: any) => Promise<void>;
-  updateInspiration: (updates: any) => void;
-  addAdmin: (admin: any) => any;
+  updateInspiration: (updates: any) => Promise<void>;
+  addAdmin: (admin: any) => Promise<void>;
   deleteAdmin: (id: string) => Promise<void>;
   updateAdminPassword: (id: string, newPassword: string) => Promise<void>;
 }
@@ -42,77 +31,73 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [dailyData, setDailyData] = useState<DailyData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isInitialized, setIsInitialized] = useState<boolean>(true);
-  
   const [news, setNews] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [sohbet, setSohbet] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>({ mosque_vipps: "29816" });
-  const [inspiration, setInspiration] = useState<any>({
-    verseText: '', verseReference: '', hadithText: '', hadithSource: '', published: true
-  });
+  const [settings, setSettings] = useState<any>({ vippsNumber: "29816" });
+  const [inspiration, setInspiration] = useState<any>({});
   const [admins, setAdmins] = useState<any[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchInspiration = async () => {
+  const loadAllData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now.getTime() - start.getTime();
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
+      const [n, s, soh, insp] = await Promise.all([
+        supabase.from('news').select('*'),
+        supabase.from('staff').select('*'),
+        supabase.from('sohbet').select('*'),
+        supabase.from('inspiration').select('*').limit(1).single()
+      ]);
 
-      if (!supabase) return;
-
-      const { data, error } = await supabase
-        .from('inspiration')
-        .select('verse_text, verse_reference, hadith_text, hadith_source')
-        .eq('day_of_year', dayOfYear)
-        .single();
-
-      if (error) throw error;
-      setDailyData(data || null);
-    } catch (error) {
-      console.error("fetchInspiration hatası:", error);
-      setDailyData(null);
+      if (n.data) setNews(n.data);
+      if (s.data) setStaff(s.data);
+      if (soh.data) setSohbet(soh.data);
+      if (insp.data) setInspiration(insp.data);
+    } catch (e) {
+      console.error("Veri yükleme hatası:", e);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (...args: any[]): Promise<boolean> => { 
-    setIsAdmin(true); 
-    return true; 
-  };
-  
-  const logout = () => setIsAdmin(false);
-  const addNews = async () => {};
-  const updateNews = async () => {};
-  const deleteNews = async () => {};
-  const addStaff = async () => {};
-  const updateStaff = async () => {};
-  const deleteStaff = async () => {};
-  const addSohbet = async () => {};
-  const updateSohbet = async () => {};
-  const deleteSohbet = async () => {};
-  const updateSettings = async () => {};
-  const updateInspiration = (updates: any) => {};
-  const addAdmin = (admin: any) => { return { success: true }; };
-  const deleteAdmin = async () => {};
-  const updateAdminPassword = async () => {};
-
   useEffect(() => {
-    fetchInspiration();
+    loadAllData();
   }, []);
+
+  const login = async (u: string, p: string, r: string): Promise<boolean> => {
+    const { data, error } = await supabase.from('admins').select('*').eq('username', u).eq('password', p).single();
+    if (data && !error) {
+      setCurrentAdmin(data);
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => setCurrentAdmin(null);
+
+  const addNews = async (item: any) => { await supabase.from('news').insert(item); loadAllData(); };
+  const updateNews = async (id: string, item: any) => { await supabase.from('news').update(item).eq('id', id); loadAllData(); };
+  const deleteNews = async (id: string) => { await supabase.from('news').delete().eq('id', id); loadAllData(); };
+
+  const addStaff = async (item: any) => { await supabase.from('staff').insert(item); loadAllData(); };
+  const updateStaff = async (id: string, item: any) => { await supabase.from('staff').update(item).eq('id', id); loadAllData(); };
+  const deleteStaff = async (id: string) => { await supabase.from('staff').delete().eq('id', id); loadAllData(); };
+
+  const addSohbet = async (item: any) => { await supabase.from('sohbet').insert(item); loadAllData(); };
+  const updateSohbet = async (id: string, item: any) => { await supabase.from('sohbet').update(item).eq('id', id); loadAllData(); };
+  const deleteSohbet = async (id: string) => { await supabase.from('sohbet').delete().eq('id', id); loadAllData(); };
+
+  const updateSettings = async (s: any) => { setSettings(s); /* Supabase update logic */ };
+  const updateInspiration = async (u: any) => { await supabase.from('inspiration').update(u).eq('id', inspiration.id); loadAllData(); };
+  const addAdmin = async (a: any) => { await supabase.from('admins').insert(a); };
+  const deleteAdmin = async (id: string) => { await supabase.from('admins').delete().eq('id', id); };
+  const updateAdminPassword = async (id: string, p: string) => { await supabase.from('admins').update({ password: p }).eq('id', id); };
 
   return (
     <AppContext.Provider value={{
-      dailyData, loading, isAdmin, isInitialized, news, staff, sohbet, settings, inspiration, admins, currentAdmin,
-      fetchInspiration, login, logout, addNews, updateNews, deleteNews, addStaff, updateStaff, deleteStaff,
+      news, staff, sohbet, settings, inspiration, admins, currentAdmin, loading,
+      login, logout, addNews, updateNews, deleteNews, addStaff, updateStaff, deleteStaff,
       addSohbet, updateSohbet, deleteSohbet, updateSettings, updateInspiration, addAdmin, deleteAdmin, updateAdminPassword
     }}>
       {children}
@@ -122,8 +107,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useApp = () => {
   const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useApp mutlaka bir AppProvider içinde kullanılmalıdır');
-  }
+  if (!context) throw new Error('useApp, AppProvider içinde kullanılmalı');
   return context;
 };
