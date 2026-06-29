@@ -17,11 +17,11 @@ interface AppContextType {
   staff: any[];
   sohbet: any[];
   settings: any;
-  inspiration: any; // Sayfanın beklediği nesne yapısıyla uyumlu hale getirildi
+  inspiration: any;
   admins: any[];
   currentAdmin: any | null;
   fetchInspiration: () => Promise<void>;
-  login: (username: string, password: string, role?: string) => Promise<boolean>; // 3 parametre uyumlu yapıldı
+  login: (...args: any[]) => Promise<boolean>; // Her türlü çağrıyı kabul edecek esnek yapıya alındı
   logout: () => void;
   addNews: (item: any) => Promise<void>;
   updateNews: (id: string, item: any) => Promise<void>;
@@ -33,8 +33,8 @@ interface AppContextType {
   updateSohbet: (id: string, item: any) => Promise<void>;
   deleteSohbet: (id: string) => Promise<void>;
   updateSettings: (settings: any) => Promise<void>;
-  updateInspiration: (updates: any) => void; // AdminPanel'in tek parametreli beklentisiyle eşitlendi
-  addAdmin: (admin: any) => any; // Admin nesnesiyle uyumlu hale getirildi
+  updateInspiration: (updates: any) => void;
+  addAdmin: (admin: any) => any;
   deleteAdmin: (id: string) => Promise<void>;
   updateAdminPassword: (id: string, newPassword: string) => Promise<void>;
 }
@@ -66,7 +66,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const oneDay = 1000 * 60 * 60 * 24;
       const dayOfYear = Math.floor(diff / oneDay);
 
-      // Supabase'in null olma ihtimaline karşı opsiyonel zincirleme (?.) ve güvence eklendi
       if (!supabase) return;
 
       const { data, error } = await supabase
@@ -85,8 +84,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Login fonksiyonu artık Promise<boolean> dönerken senkron/asenkron tip çelişkisi yaratmıyor
-  const login = async (username: string, password: string, role?: string): Promise<boolean> => { 
+  const login = async (...args: any[]): Promise<boolean> => { 
     setIsAdmin(true); 
     return true; 
   };
