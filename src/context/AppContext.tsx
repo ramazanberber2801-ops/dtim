@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+Import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface AppContextType {
@@ -40,9 +40,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [inspiration, setInspiration] = useState<any>({});
   const [admins, setAdmins] = useState<any[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isInitialized] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isInitialized] = useState(true);
 
   const mapSettingsFromDb = (row: any) => ({
     id: row.id,
@@ -130,34 +130,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentAdmin(null);
   };
 
-const addNews = async (item: any) => {
-  const client = supabase;
-  if (!client) return;
+  const addNews = async (item: any) => {
+    const client = supabase;
+    if (!client) return;
 
-  const { error } = await client.from('news').insert([item]);
+    const { error } = await client.from('news').insert([item]);
 
-  if (error) {
-    console.error(error);
-    alert('Haber eklenemedi: ' + error.message);
-    return;
-  }
+    if (error) {
+      console.error('NEWS INSERT ERROR:', error);
+      alert('Haber eklenemedi: ' + error.message);
+      return;
+    }
 
-  await loadAllData();
-};
-
-  await loadAllData();
-};
+    await loadAllData();
+  };
 
   const updateNews = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-    await client.from('news').update(item).eq('id', id);
+
+    const { error } = await client.from('news').update(item).eq('id', id);
+
+    if (error) {
+      alert('Haber güncellenemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
   const deleteNews = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('news').delete().eq('id', id);
     await loadAllData();
   };
@@ -165,13 +170,15 @@ const addNews = async (item: any) => {
   const addStaff = async (item: any) => {
     const client = supabase;
     if (!client) return;
-    await client.from('staff').insert(item);
+
+    await client.from('staff').insert([item]);
     await loadAllData();
   };
 
   const updateStaff = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('staff').update(item).eq('id', id);
     await loadAllData();
   };
@@ -179,36 +186,44 @@ const addNews = async (item: any) => {
   const deleteStaff = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('staff').delete().eq('id', id);
     await loadAllData();
   };
 
-const addSohbet = async (item: any) => {
-  const client = supabase;
-  if (!client) return;
+  const addSohbet = async (item: any) => {
+    const client = supabase;
+    if (!client) return;
 
-  const { error } = await client.from('sohbet').insert([item]);
+    const { error } = await client.from('sohbet').insert([item]);
 
-  if (error) {
-    console.error(error);
-    alert('Sohbet eklenemedi: ' + error.message);
-    return;
-  }
+    if (error) {
+      console.error('SOHBET INSERT ERROR:', error);
+      alert('Sohbet eklenemedi: ' + error.message);
+      return;
+    }
 
-  await loadAllData();
-};
+    await loadAllData();
   };
 
   const updateSohbet = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-    await client.from('sohbet').update(item).eq('id', id);
+
+    const { error } = await client.from('sohbet').update(item).eq('id', id);
+
+    if (error) {
+      alert('Sohbet güncellenemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
   const deleteSohbet = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('sohbet').delete().eq('id', id);
     await loadAllData();
   };
@@ -238,7 +253,7 @@ const addSohbet = async (item: any) => {
     const client = supabase;
     if (!client) return;
 
-    await client.from('admins').insert(admin);
+    await client.from('admins').insert([admin]);
     await loadAllData();
   };
 
