@@ -27,7 +27,15 @@ function AppContent() {
     if (isInitialized && isAdmin) {
       setShowPanel(true);
     }
-  }, [isInitialized]);
+  }, [isInitialized, isAdmin]); // Bağımlılık dizisi güvenli hale getirildi
+
+  // Giriş başarılı olduğunda paneli açıp modalı kapatmak için useApp'teki isAdmin durumunu izliyoruz
+  useEffect(() => {
+    if (isInitialized && isAdmin && showLogin) {
+      setShowLogin(false);
+      setShowPanel(true);
+    }
+  }, [isAdmin, isInitialized, showLogin]);
 
   const handleSecretTrigger = () => {
     if (isAdmin) {
@@ -35,11 +43,6 @@ function AppContent() {
     } else {
       setShowLogin(true);
     }
-  };
-
-  const handleLoginSuccess = () => {
-    setShowLogin(false);
-    setShowPanel(true);
   };
 
   const handleShowGuide = (browser: BrowserType, platform: Platform) => {
@@ -74,10 +77,10 @@ function AppContent() {
         onSecretTrigger={handleSecretTrigger}
       />
 
+      {/* AdminLoginModal yeni prop yapısına göre güncellendi */}
       <AdminLoginModal
-        open={showLogin}
+        isOpen={showLogin}
         onClose={() => setShowLogin(false)}
-        onSuccess={handleLoginSuccess}
       />
 
       <AdminPanel
