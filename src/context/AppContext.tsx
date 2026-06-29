@@ -5,18 +5,13 @@ import { DEFAULT_SETTINGS, DEFAULT_ADMINS } from '../lib/constants';
 import * as db from '../lib/db';
 import { isSupabaseConfigured } from '../lib/supabase';
 
-// ── Session ──────────────────────────────────────────────────
-
 interface SessionData {
   active: boolean;
   admin: AdminAccount | null;
   remember: boolean;
 }
 
-// ── Context shape ────────────────────────────────────────────
-
 interface AppContextValue {
-  // Data
   news: NewsItem[];
   staff: StaffMember[];
   sohbet: SohbetItem[];
@@ -28,28 +23,23 @@ interface AppContextValue {
   isInitialized: boolean;
   isSupabaseReady: boolean;
 
-  // Auth
   login: (username: string, password: string, rememberMe: boolean) => boolean;
   logout: () => void;
   addAdmin: (admin: Omit<AdminAccount, 'id'>) => { success: boolean; error?: string };
   deleteAdmin: (id: string) => void;
   updateAdminPassword: (username: string, newPassword: string) => void;
 
-  // Settings
   updateSettings: (updates: Partial<MosqueSettings>) => void;
   updateInspiration: (updates: Partial<DailyInspiration>) => void;
 
-  // News CRUD
   addNews: (item: Omit<NewsItem, 'id' | 'date'>) => void;
   updateNews: (id: string, updates: Partial<NewsItem>) => void;
   deleteNews: (id: string) => void;
 
-  // Staff CRUD
   addStaff: (member: Omit<StaffMember, 'id'>) => void;
   updateStaff: (id: string, updates: Partial<StaffMember>) => void;
   deleteStaff: (id: string) => void;
 
-  // Sohbet CRUD
   addSohbet: (item: Omit<SohbetItem, 'id'>) => void;
   updateSohbet: (id: string, updates: Partial<SohbetItem>) => void;
   deleteSohbet: (id: string) => void;
@@ -62,7 +52,6 @@ function genId(prefix: string): string {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  // ── State ──────────────────────────────────────────────────
   const [news, setNews] = useState<NewsItem[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [sohbet, setSohbet] = useState<SohbetItem[]>([]);
@@ -76,7 +65,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSupabaseReady] = useState(isSupabaseConfigured);
 
-  // Verileri yenilemek için ortak bir fonksiyon (CRUD işlemlerinden sonra çağrılacak)
+  // Verileri yenilemek için ortak ve güvenli fonksiyon
   const refreshAllData = useCallback(async () => {
     try {
       const [newsData, sohbetData, staffData, settingsData, inspData, adminsData] = await Promise.all([
@@ -268,7 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [refreshAllData]);
 
   const updateSohbet = useCallback((id: string, updates: Partial<SohbetItem>) => {
-    setSohbet(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    setStaff(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
     db.updateSohbet(id, updates).then(() => refreshAllData());
   }, [refreshAllData]);
 
