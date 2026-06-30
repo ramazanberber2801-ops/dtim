@@ -91,7 +91,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     try {
       const [n, s, soh, insp, a, setRes] = await Promise.all([
-        client.from('news').select('*'),
+        client
+  .from('news')
+  .select('*')
+  .order('date', { ascending: false }),
         client.from('staff').select('*'),
         client.from('sohbet').select('*'),
         client.from('inspiration').select('*').limit(1).maybeSingle(),
