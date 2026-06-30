@@ -1,4 +1,4 @@
-import { useState } from 'react';
+Import { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -9,7 +9,7 @@ export function SecuritySetupModal({
 }: {
   open: boolean;
   admin: any;
-  onDone: () => void;
+  onDone: (updatedAdmin: any) => void;
 }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -24,27 +24,34 @@ export function SecuritySetupModal({
     if (!question.trim()) return setError('Güvenlik sorusu zorunludur.');
     if (!answer.trim()) return setError('Güvenlik cevabı zorunludur.');
 
+    const updatedAdmin = {
+      ...admin,
+      security_question: question.trim(),
+      security_answer: answer.trim().toLowerCase(),
+    };
+
     const client = supabase;
 
-if (!client) {
-  setError('Sistem bağlantısı yok.');
-  return;
-}
+    if (!client) {
+      setError('Sistem bağlantısı yok.');
+      return;
+    }
 
-const { error } = await client
-  .from('admins')
-  .update({
-    security_question: updatedAdmin.security_question,
-    security_answer: updatedAdmin.security_answer,
-  })
-  .eq('id', admin.id);
+    const { error } = await client
+      .from('admins')
+      .update({
+        security_question: updatedAdmin.security_question,
+        security_answer: updatedAdmin.security_answer,
+      })
+      .eq('id', admin.id);
 
     if (error) {
       setError('Kaydedilemedi: ' + error.message);
       return;
     }
 
-    onDone();
+    localStorage.setItem('dtim_admin', JSON.stringify(updatedAdmin));
+    onDone(updatedAdmin);
   };
 
   return (
