@@ -204,13 +204,14 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
     if (!title.trim()) return setError('Başlık zorunludur.');
     if (!content.trim()) return setError('İçerik zorunludur.');
 
-    const data = {
-      title: title.trim(),
-      content: content.trim(),
-      category,
-      image_base64: imageBase64,
-      date: item?.date || new Date().toISOString()
-    };
+const data = {
+  id: item?.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  title: title.trim(),
+  content: content.trim(),
+  category,
+  image_base64: imageBase64,
+  date: item?.date || new Date().toISOString()
+};
 
     if (item) await onUpdate(item.id, data);
     else await onAdd(data);
@@ -311,13 +312,15 @@ function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
     if (!description.trim()) return setError('Açıklama zorunludur.');
     if (!speaker.trim()) return setError('Konuşmacı zorunludur.');
 
-    const data = { title, description, date, time, location, speaker };
-
-    if (item) await onUpdate(item.id, data);
-    else await onAdd(data);
-
-    onClose();
-  };
+    const data = {
+  id: item?.id || `sohbet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  title,
+  description,
+  date,
+  time,
+  location,
+  speaker
+};
 
   return (
     <div className="p-4">
