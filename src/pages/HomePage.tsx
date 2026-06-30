@@ -27,6 +27,7 @@ import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
+import { subscribeToPushNotifications } from '../lib/pushNotifications';
 import type { NewsItem, SohbetItem } from '../types';
 
 type NewsWithDbImage = NewsItem & { image_base64?: string };
@@ -237,3 +238,199 @@ export function HomePage() {
                 <span className="text-[10px] bg-[#C5A880] text-white px-1.5 py-0.5 rounded-full font-medium tabular-nums">
                   {timeUntil}
                 </span>
+              </div>
+            </div>
+          )}
+
+          <div className="p-2.5">
+            {loading ? (
+              <p className="text-center text-xs text-[#2D2A26]/50 py-4">Namaz vakitleri yükleniyor...</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-1.5">
+                {prayerItems.map((p) => {
+                  const Icon = p.icon;
+                  const isNext = nextPrayer?.name === p.name;
+
+                  return (
+                    <div
+                      key={p.name}
+                      className={`rounded-lg p-2 text-center border-2 ${
+                        isNext ? 'bg-[#2D2A26] border-[#C5A880]' : 'bg-[#FAF6F0] border-[#C5A880]/20'
+                      }`}
+                    >
+                      <Icon
+                        size={14}
+                        className="mx-auto mb-1"
+                        style={{ color: isNext ? '#C5A880' : p.color }}
+                      />
+                      <p className={`text-[10px] ${isNext ? 'text-[#FAF6F0]/60' : 'text-[#2D2A26]/60'}`}>
+                        {p.name}
+                      </p>
+                      <p className={`text-xs font-semibold ${isNext ? 'text-[#FAF6F0]' : 'text-[#2D2A26]'}`}>
+                        {p.time}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <>
+  <InstallAppButton />
+
+  <section className="px-4 mt-4">
+    <button
+      onClick={() => subscribeToPushNotifications()}
+      className="w-full bg-[#C5A880] text-white rounded-xl p-4 shadow-md"
+    >
+      <div className="flex flex-col items-center">
+        <span className="text-lg">🔔</span>
+        <span className="font-medium">Bildirimleri Aç</span>
+        <span className="text-xs opacity-80">
+          Duyuru ve sohbetlerden anında haberdar olun
+        </span>
+      </div>
+    </button>
+  </section>
+</>
+
+      {dailyData && (
+        <section className="px-4 mt-4">
+          <div className="bg-[#2D2A26] rounded-xl p-5 text-[#FAF6F0]">
+            {dailyData.verse_text && (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen size={14} className="text-[#C5A880]" />
+                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Bugünün Ayeti</h3>
+                </div>
+                <p className="text-sm mb-4">{dailyData.verse_text}</p>
+              </>
+            )}
+
+            {dailyData.hadith_text && (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen size={14} className="text-[#C5A880]" />
+                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Bugünün Hadisi</h3>
+                </div>
+                <p className="text-sm">{dailyData.hadith_text}</p>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      <section className="px-4 mt-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Mic size={18} className="text-[#C5A880]" />
+          <h2 className="font-serif text-lg text-[#2D2A26]">Yaklaşan Sohbet / Ders</h2>
+        </div>
+
+        {upcomingSohbet.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center border border-[#C5A880]/20">
+            <Mic size={28} className="mx-auto text-[#C5A880]/40 mb-2" />
+            <p className="text-sm text-[#2D2A26]/50">Yaklaşan program bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {upcomingSohbet.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setSelectedSohbet(item)}
+                className="w-full bg-white rounded-xl border border-[#C5A880]/20 flex text-left overflow-hidden"
+              >
+                <div className="w-16 shrink-0 bg-[#2D2A26] flex flex-col items-center justify-center text-[#FAF6F0] py-3">
+                  <span className="text-[10px] uppercase text-[#C5A880]">
+                    {new Date(item.date).toLocaleDateString('tr-TR', { month: 'short' })}
+                  </span>
+                  <span className="font-serif text-xl leading-none">{new Date(item.date).getDate()}</span>
+                  <span className="text-[10px] text-[#FAF6F0]/60 mt-0.5">{item.time}</span>
+                </div>
+
+                <div className="flex-1 p-3 min-w-0">
+                  <h3 className="font-serif text-sm text-[#2D2A26] line-clamp-1">{item.title}</h3>
+                  <p className="text-xs text-[#2D2A26]/50 mt-1 line-clamp-2">{item.description}</p>
+
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="flex items-center gap-1 text-[10px] text-[#2D2A26]/40">
+                      <MapPin size={10} />
+                      {item.location}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-[#2D2A26]/40">
+                      <User size={10} />
+                      {item.speaker}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center pr-3">
+                  <ChevronRight size={18} className="text-[#C5A880]/40" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="px-4 mt-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Newspaper size={18} className="text-[#C5A880]" />
+          <h2 className="font-serif text-lg text-[#2D2A26]">Duyurular ve Haberler</h2>
+        </div>
+
+        {featuredNews.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center border border-[#C5A880]/20">
+            <Newspaper size={28} className="mx-auto text-[#C5A880]/40 mb-2" />
+            <p className="text-sm text-[#2D2A26]/50">Henüz haber eklenmemiş.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {featuredNews.map((item) => {
+              const imageSrc = item.imageBase64 || item.image_base64;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedNews(item)}
+                  className="w-full bg-white rounded-xl border border-[#C5A880]/20 flex text-left p-2"
+                >
+                  {imageSrc ? (
+                    <div className="w-20 h-20 shrink-0 overflow-hidden rounded-lg">
+                      <img src={imageSrc} alt={item.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 shrink-0 bg-[#C5A880]/10 rounded-lg flex items-center justify-center">
+                      <Newspaper size={20} className="text-[#C5A880]/40" />
+                    </div>
+                  )}
+
+                  <div className="pl-3 py-1 min-w-0">
+                    <span className="inline-block text-[9px] font-semibold text-[#C5A880] uppercase tracking-wider bg-[#C5A880]/10 px-1.5 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                    <h3 className="font-serif text-sm line-clamp-2 mt-1">{item.title}</h3>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{item.content}</p>
+                    <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#2D2A26]/40">
+                      <Calendar size={10} />
+                      {new Date(item.date).toLocaleDateString('tr-TR', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <NewsModal item={selectedNews} onClose={() => setSelectedNews(null)} />
+      <SohbetModal item={selectedSohbet} onClose={() => setSelectedSohbet(null)} />
+    </div>
+  );
+}
