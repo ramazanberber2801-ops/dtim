@@ -8,39 +8,36 @@ import { InstallButton } from './components/InstallButton';
 import { InstallGuideModal } from './components/InstallGuideModal';
 import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
-import { SecuritySetupModal } from './components/SecuritySetupModal'; // Lagt til import
+import { SecuritySetupModal } from './components/SecuritySetupModal';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
 function AppContent() {
-  const { isAdmin, isInitialized, currentAdmin } = useApp(); // currentAdmin lagt til
+  const { isAdmin, isInitialized, currentAdmin } = useApp();
   const [page, setPage] = useState<Page>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [showSecuritySetup, setShowSecuritySetup] = useState(false); // Ny state
+  const [showSecuritySetup, setShowSecuritySetup] = useState(false);
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
 
-  // Logikk for å tvinge sikkerhetsoppsett
+  // Enhetlig logikk for å styre panel- og sikkerhetsmodal-visning
   useEffect(() => {
-    if (
-      isInitialized &&
-      isAdmin &&
-      currentAdmin &&
-      (!currentAdmin.security_question || !currentAdmin.security_answer)
-    ) {
-      setShowSecuritySetup(true);
+    if (isInitialized && isAdmin) {
+      if (currentAdmin && (!currentAdmin.security_question || !currentAdmin.security_answer)) {
+        setShowSecuritySetup(true);
+        setShowPanel(false);
+      } else {
+        setShowSecuritySetup(false);
+        setShowPanel(true);
+      }
+    } else {
+      setShowSecuritySetup(false);
       setShowPanel(false);
     }
   }, [isInitialized, isAdmin, currentAdmin]);
-
-  useEffect(() => {
-    if (isInitialized && isAdmin && !showSecuritySetup) {
-      setShowPanel(true);
-    }
-  }, [isInitialized, isAdmin, showSecuritySetup]);
 
   const handleSecretTrigger = () => {
     if (isAdmin) {
@@ -103,7 +100,7 @@ function AppContent() {
         platform={guidePlatform}
       />
 
-      {/* Sikkerhetsmodal nederst */}
+      {/* Sikkerhetsmodal uten onClose prop da komponenten din ikke støtter den */}
       <SecuritySetupModal
         open={showSecuritySetup}
         admin={currentAdmin}
@@ -111,7 +108,6 @@ function AppContent() {
           setShowSecuritySetup(false);
           setShowPanel(true);
         }}
-        onClose={() => setShowSecuritySetup(false)}
       />
     </div>
   );
