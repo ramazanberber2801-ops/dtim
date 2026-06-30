@@ -9,6 +9,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   if (!isOpen) return null;
 
