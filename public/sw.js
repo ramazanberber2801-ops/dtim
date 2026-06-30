@@ -1,5 +1,5 @@
-// DTIM Service Worker — basic offline caching for PWA
-const CACHE_NAME = 'dtim-v1';
+// DTIM Service Worker — offline caching + push notifications
+const CACHE_NAME = 'dtim-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -10,7 +10,9 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS).catch(() => {}))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(STATIC_ASSETS).catch(() => {})
+    )
   );
   self.skipWaiting();
 });
@@ -18,34 +20,60 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+      Promise.all(
+        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
+      )
     )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Network-first for API calls, cache-first for static assets
   const url = new URL(event.request.url);
 
   if (url.origin === location.origin) {
-    // Same-origin: cache-first
     event.respondWith(
       caches.match(event.request).then((cached) => {
         return cached || fetch(event.request).then((response) => {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone).catch(() => {}));
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.put(event.request, clone).catch(() => {})
+          );
           return response;
         }).catch(() => cached);
       })
     );
   } else {
-    // Cross-origin (APIs): network-first, fallback to cache
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request).then((c) => c || new Response('', { status: 504 })))
+      fetch(event.request).catch(() =>
+        caches.match(event.request).then((c) => c || new Response('', { status: 504 }))
+      )
     );
   }
+});
+
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+
+  const title = data.title || 'DTIM';
+  const options = {
+    body: data.body || 'Yeni bildirim var.',
+    icon: '/images/dtim-logo.svg',
+    badge: '/images/dtim-logo.svg',
+    data: {
+      url: data.url || '/',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(clients.openWindow(url));
 });
