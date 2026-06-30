@@ -24,13 +24,20 @@ export function SecuritySetupModal({
     if (!question.trim()) return setError('Güvenlik sorusu zorunludur.');
     if (!answer.trim()) return setError('Güvenlik cevabı zorunludur.');
 
-    const { error } = await supabase
-      .from('admins')
-      .update({
-        security_question: question.trim(),
-        security_answer: answer.trim().toLowerCase(),
-      })
-      .eq('id', admin.id);
+    const client = supabase;
+
+if (!client) {
+  setError('Sistem bağlantısı yok.');
+  return;
+}
+
+const { error } = await client
+  .from('admins')
+  .update({
+    security_question: updatedAdmin.security_question,
+    security_answer: updatedAdmin.security_answer,
+  })
+  .eq('id', admin.id);
 
     if (error) {
       setError('Kaydedilemedi: ' + error.message);
