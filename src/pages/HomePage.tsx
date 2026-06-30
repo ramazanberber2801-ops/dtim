@@ -27,6 +27,7 @@ import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
+import { subscribeToPushNotifications } from '../lib/pushNotifications';
 import type { NewsItem, SohbetItem } from '../types';
 
 type NewsWithDbImage = NewsItem & { image_base64?: string };
@@ -277,7 +278,24 @@ export function HomePage() {
         </div>
       </section>
 
-      <InstallAppButton />
+      <>
+  <InstallAppButton />
+
+  <section className="px-4 mt-4">
+    <button
+      onClick={() => subscribeToPushNotifications()}
+      className="w-full bg-[#C5A880] text-white rounded-xl p-4 shadow-md"
+    >
+      <div className="flex flex-col items-center">
+        <span className="text-lg">🔔</span>
+        <span className="font-medium">Bildirimleri Aç</span>
+        <span className="text-xs opacity-80">
+          Duyuru ve sohbetlerden anında haberdar olun
+        </span>
+      </div>
+    </button>
+  </section>
+</>
 
       {dailyData && (
         <section className="px-4 mt-4">
