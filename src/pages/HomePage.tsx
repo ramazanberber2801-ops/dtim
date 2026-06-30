@@ -277,7 +277,6 @@ export function HomePage() {
         </div>
       </section>
 
-      <>
 <InstallAppButton />
       {dailyData && (
         <section className="px-4 mt-4">
@@ -289,8 +288,7 @@ export function HomePage() {
                   <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Bugünün Ayeti</h3>
                 </div>
                 <p className="text-sm mb-4">{dailyData.verse_text}</p>
-              </>
-            )}
+                        )}
 
             {dailyData.hadith_text && (
               <>
