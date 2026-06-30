@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fileToOptimizedBase64 } from '../lib/imageUtils';
+import { supabase } from '../lib/supabase';
 
 type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'admins';
 
@@ -523,21 +524,68 @@ function AdminsManager({ admins, onAdd, onDelete, isSuperadmin }: any) {
     if (!displayName.trim()) return setMsg('Görünen ad zorunludur.');
     if (password.length < 6) return setMsg('Şifre en az 6 karakter olmalıdır.');
 
-await onAdd({
-  id: `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  username: username.trim(),
-  display_name: displayName.trim(),
-  password,
-  role: 'admin',
-  security_question: null,
-  security_answer: null,
-});
+    await onAdd({
+      id: `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      username: username.trim(),
+      display_name: displayName.trim(),
+      password,
+      role: 'admin',
+      security_question: null,
+      security_answer: null,
+    });
 
     setUsername('');
     setDisplayName('');
     setPassword('');
     setShowForm(false);
     setMsg('Yönetici eklendi.');
+  };
+
+  const resetPassword = async (admin: any) => {
+    const newPassword = prompt(`${admin.username} için yeni geçici şifre girin:`);
+
+    if (!newPassword) return;
+    if (newPassword.length < 6) {
+      setMsg('Şifre en az 6 karakter olmalıdır.');
+      return;
+    }
+
+    const client = supabase;
+    if (!client) return setMsg('Sistem bağlantısı yok.');
+
+    const { error } = await client
+      .from('admins')
+      .update({ password: newPassword })
+      .eq('id', admin.id);
+
+    if (error) {
+      setMsg('Şifre sıfırlanamadı: ' + error.message);
+      return;
+    }
+
+    setMsg(`${admin.username} için şifre güncellendi.`);
+  };
+
+  const clearSecurityQuestion = async (admin: any) => {
+    if (!confirm(`${admin.username} için güvenlik sorusu temizlensin mi?`)) return;
+
+    const client = supabase;
+    if (!client) return setMsg('Sistem bağlantısı yok.');
+
+    const { error } = await client
+      .from('admins')
+      .update({
+        security_question: null,
+        security_answer: null,
+      })
+      .eq('id', admin.id);
+
+    if (error) {
+      setMsg('Güvenlik sorusu temizlenemedi: ' + error.message);
+      return;
+    }
+
+    setMsg(`${admin.username} için güvenlik sorusu temizlendi.`);
   };
 
   return (
@@ -569,22 +617,48 @@ await onAdd({
       {admins?.length === 0 ? <EmptyState text="Henüz yönetici listesi yüklenmedi veya kayıt yok." /> : (
         <div className="space-y-3">
           {admins.map((admin: any) => (
-            <div key={admin.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#2D2A26] flex items-center justify-center text-white font-serif">
-                {admin.displayName?.charAt(0) || admin.username?.charAt(0)}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-serif text-sm">{admin.displayName || admin.username}</h3>
-                <p className="text-xs text-[#2D2A26]/50">@{admin.username}</p>
-                <span className="text-[9px] text-[#C5A880] uppercase">{admin.role}</span>
+            <div key={admin.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-[#2D2A26] flex items-center justify-center text-white font-serif">
+                  {admin.display_name?.charAt(0) || admin.displayName?.charAt(0) || admin.username?.charAt(0)}
+                </div>
+
+                <div className="flex-1">
+                  <h3 className="font-serif text-sm">
+                    {admin.display_name || admin.displayName || admin.username}
+                  </h3>
+                  <p className="text-xs text-[#2D2A26]/50">@{admin.username}</p>
+                  <span className="text-[9px] text-[#C5A880] uppercase">{admin.role}</span>
+                </div>
+
+                {isSuperadmin && admin.role !== 'superadmin' && (
+                  <button
+                    onClick={() => {
+                      if (confirm('Bu yöneticiyi silmek istiyor musunuz?')) onDelete(admin.id);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"
+                  >
+                    <Trash2 size={14} className="text-red-500" />
+                  </button>
+                )}
               </div>
 
-              {isSuperadmin && admin.role !== 'superadmin' && (
-                <button onClick={() => {
-                  if (confirm('Bu yöneticiyi silmek istiyor musunuz?')) onDelete(admin.id);
-                }} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
-                  <Trash2 size={14} className="text-red-500" />
-                </button>
+              {isSuperadmin && (
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button
+                    onClick={() => resetPassword(admin)}
+                    className="py-2 rounded-lg bg-[#C5A880]/10 text-[#C5A880] text-xs font-medium"
+                  >
+                    Şifreyi Sıfırla
+                  </button>
+
+                  <button
+                    onClick={() => clearSecurityQuestion(admin)}
+                    className="py-2 rounded-lg bg-[#2D2A26]/10 text-[#2D2A26] text-xs font-medium"
+                  >
+                    Güvenlik Sorusunu Temizle
+                  </button>
+                </div>
               )}
             </div>
           ))}
