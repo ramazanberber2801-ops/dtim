@@ -1,4 +1,4 @@
-Import { useState } from 'react';
+import { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
