@@ -12,7 +12,7 @@ export function ForgotPasswordModal({
   initialUsername?: string;
 }) {
   const [step, setStep] = useState<'username' | 'question' | 'done'>('username');
-  const [username, setUsername] = useState(initialUsername || '');
+  const [username, setUsername] = useState('');
   const [admin, setAdmin] = useState<any | null>(null);
   const [answer, setAnswer] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -20,22 +20,15 @@ export function ForgotPasswordModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (open && initialUsername?.trim()) {
-      setUsername(initialUsername.trim());
-
-      setTimeout(() => {
-        const form = document.getElementById('forgot-password-form') as HTMLFormElement | null;
-        form?.requestSubmit();
-      }, 0);
-    }
-  }, [open, initialUsername]);
-
-  if (!open) return null;
-
-  const findAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const lookupAdmin = async (name: string) => {
     setError('');
+
+    const cleanUsername = name.trim();
+
+    if (!cleanUsername) {
+      setStep('username');
+      return;
+    }
 
     const client = supabase;
     if (!client) {
@@ -48,18 +41,47 @@ export function ForgotPasswordModal({
     const { data, error } = await client
       .from('admins')
       .select('id, username, security_question, security_answer')
-      .eq('username', username.trim())
+      .eq('username', cleanUsername)
       .maybeSingle();
 
     setLoading(false);
 
-    if (error || !data) return setError('Kullanıcı bulunamadı.');
+    if (error || !data) {
+      setStep('username');
+      return setError('Kullanıcı bulunamadı.');
+    }
+
     if (!data.security_question || !data.security_answer) {
+      setStep('username');
       return setError('Güvenlik sorusu tanımlı değil.');
     }
 
+    setUsername(cleanUsername);
     setAdmin(data);
     setStep('question');
+  };
+
+  useEffect(() => {
+    if (open) {
+      setStep('username');
+      setUsername(initialUsername || '');
+      setAdmin(null);
+      setAnswer('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setError('');
+
+      if (initialUsername?.trim()) {
+        lookupAdmin(initialUsername);
+      }
+    }
+  }, [open, initialUsername]);
+
+  if (!open) return null;
+
+  const findAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await lookupAdmin(username);
   };
 
   const resetPassword = async (e: React.FormEvent) => {
@@ -116,10 +138,11 @@ export function ForgotPasswordModal({
           </button>
         </div>
 
+        {loading && <p className="text-xs text-[#2D2A26]/50 mb-3">Yükleniyor...</p>}
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
         {step === 'username' && (
-          <form id="forgot-password-form" onSubmit={findAdmin} className="space-y-4">
+          <form onSubmit={findAdmin} className="space-y-4">
             <input
               className="w-full p-3 border rounded-xl"
               placeholder="Kullanıcı Adı"
