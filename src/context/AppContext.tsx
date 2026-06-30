@@ -32,16 +32,27 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const getSavedAdmin = () => {
+  try {
+    const saved = localStorage.getItem('dtim_admin');
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const savedAdmin = getSavedAdmin();
+
   const [news, setNews] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [sohbet, setSohbet] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({ vippsNumber: '29816' });
   const [inspiration, setInspiration] = useState<any>({});
   const [admins, setAdmins] = useState<any[]>([]);
-  const [currentAdmin, setCurrentAdmin] = useState<any | null>(null);
+  const [currentAdmin, setCurrentAdmin] = useState<any | null>(savedAdmin);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(!!savedAdmin);
   const [isInitialized] = useState(true);
 
   const mapSettingsFromDb = (row: any) => ({
@@ -119,6 +130,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (data && !error) {
       setCurrentAdmin(data);
       setIsAdmin(true);
+      localStorage.setItem('dtim_admin', JSON.stringify(data));
       return true;
     }
 
@@ -126,6 +138,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = () => {
+    localStorage.removeItem('dtim_admin');
     setIsAdmin(false);
     setCurrentAdmin(null);
   };
