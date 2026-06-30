@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, Lock, User, Shield, Loader2, AlertCircle } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { login } = useApp();
@@ -16,7 +17,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const success = await login(username, password, 'admin');
+    const success = await login(username, password);
     if (success) onClose();
     else setError('Hatalı giriş bilgileri!');
     setLoading(false);
@@ -29,25 +30,50 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
           <h2 className="font-serif text-xl">Yönetici Girişi</h2>
           <button onClick={onClose}><X size={20} /></button>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <p className="text-red-500 text-xs">{error}</p>}
-          <input className="w-full p-3 border rounded-xl" placeholder="Kullanıcı Adı" onChange={e => setUsername(e.target.value)} />
-          <input type="password" className="w-full p-3 border rounded-xl" placeholder="Şifre" onChange={e => setPassword(e.target.value)} />
+          
+          <input 
+            className="w-full p-3 border rounded-xl" 
+            placeholder="Kullanıcı Adı" 
+            onChange={e => setUsername(e.target.value)} 
+            required
+          />
+          <input 
+            type="password" 
+            className="w-full p-3 border rounded-xl" 
+            placeholder="Şifre" 
+            onChange={e => setPassword(e.target.value)} 
+            required
+          />
+          
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} />
             Beni Hatırla
           </label>
-          <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium">
-            <button
-  type="button"
-  onClick={() => setShowForgot(true)}
-  className="w-full text-xs text-[#C5A880] hover:underline mt-2"
->
-  Şifremi Unuttum?
-</button>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium"
+          >
             {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Giriş Yap'}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => setShowForgot(true)}
+          className="w-full text-xs text-[#C5A880] hover:underline mt-4"
+        >
+          Şifremi Unuttum?
+        </button>
+
+        <ForgotPasswordModal
+          open={showForgot}
+          onClose={() => setShowForgot(false)}
+        />
       </div>
     </div>
   );
