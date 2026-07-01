@@ -2,13 +2,19 @@ import { useState, useRef, type FormEvent } from 'react';
 import {
   X, Newspaper, Users, LogOut, Trash2, Edit3, Plus,
   Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon,
-  UserCog, Check, Eye, EyeOff
+  UserCog, Check, Eye, EyeOff, Bell
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fileToOptimizedBase64 } from '../lib/imageUtils';
 import { supabase } from '../lib/supabase';
 
-type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'admins';
+type AdminTab =
+  | 'news'
+  | 'sohbet'
+  | 'staff'
+  | 'settings'
+  | 'admins'
+  | 'push';
 
 const inputClass =
   "w-full px-4 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880]";
@@ -39,6 +45,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
     { id: 'staff' as AdminTab, label: 'Yönetim', icon: Users },
     { id: 'settings' as AdminTab, label: 'Ayarlar', icon: SettingsIcon },
     { id: 'admins' as AdminTab, label: 'Yöneticiler', icon: UserCog },
+    { id: 'push' as AdminTab, label: 'Bildirim', icon: Bell },
   ];
 
   return (
@@ -91,6 +98,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
         {tab === 'staff' && <StaffManager items={staff} onAdd={addStaff} onUpdate={updateStaff} onDelete={deleteStaff} />}
         {tab === 'settings' && <SettingsManager settings={settings} onUpdate={updateSettings} currentAdmin={currentAdmin} onUpdatePassword={updateAdminPassword} />}
         {tab === 'admins' && <AdminsManager admins={admins} onAdd={addAdmin} onDelete={deleteAdmin} isSuperadmin={isSuperadmin} />}
+        {tab === 'push' && <PushManager />}
       </main>
     </div>
   );
@@ -708,6 +716,76 @@ function AdminsManager({ admins, onAdd, onDelete, isSuperadmin }: any) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function PushManager() {
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const sendPush = async () => {
+    if (!title.trim() || !message.trim()) {
+      alert('Başlık ve mesaj zorunludur.');
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const res = await fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          body: message.trim(),
+          url: '/',
+        }),
+      });
+
+      if (!res.ok) throw new Error('Push gönderilemedi');
+
+      alert('Bildirim gönderildi.');
+      setTitle('');
+      setMessage('');
+    } catch (err) {
+      console.error(err);
+      alert('Bildirim gönderilirken hata oluştu.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="font-serif text-xl">Toplu Bildirim Gönder</h2>
+
+      <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-4">
+        <input
+          className={inputClass}
+          placeholder="Başlık"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <textarea
+          rows={5}
+          className={`${inputClass} resize-none`}
+          placeholder="Mesaj"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+
+        <button
+          type="button"
+          onClick={sendPush}
+          disabled={sending}
+          className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium"
+        >
+          {sending ? 'Gönderiliyor...' : '📢 Bildirim Gönder'}
+        </button>
+      </div>
     </div>
   );
 }
