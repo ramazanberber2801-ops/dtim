@@ -167,21 +167,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentAdmin(null);
   };
 
-  const addNews = async (item: any) => {
-    const client = supabase;
-    if (!client) return;
+ const addSohbet = async (item: any) => {
+  const client = supabase;
+  if (!client) return;
 
-    const { error } = await client.from('news').insert([item]);
+  const shouldSendPush = item._sendPush === true;
+  const cleanItem = { ...item };
+  delete cleanItem._sendPush;
 
-    if (error) {
-      console.error('NEWS INSERT ERROR:', error);
-      alert('Haber eklenemedi: ' + error.message);
-      return;
-    }
+  const { error } = await client.from('sohbet').insert([cleanItem]);
 
-    await sendPush('Yeni Duyuru', item.title || 'Yeni haber yayınlandı');
-    await loadAllData();
-  };
+  if (error) {
+    console.error('SOHBET INSERT ERROR:', error);
+    alert('Sohbet eklenemedi: ' + error.message);
+    return;
+  }
+
+  if (shouldSendPush) {
+    await sendPush('Yeni Sohbet / Ders', cleanItem.title || 'Yeni program yayınlandı');
+  }
+
+  await loadAllData();
+};
 
   const updateNews = async (id: string, item: any) => {
     const client = supabase;
