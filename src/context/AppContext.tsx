@@ -28,7 +28,6 @@ interface AppContextType {
   addAdmin: (admin: any) => Promise<void>;
   deleteAdmin: (id: string) => Promise<void>;
   updateAdminPassword: (id: string, newPassword: string) => Promise<void>;
-  sendSohbetReminder: (sohbet: any) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -91,13 +90,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.error('PUSH ERROR:', e);
     }
-  };
-
-  const sendSohbetReminder = async (sohbet: any) => {
-    await sendPush(
-      'Hatırlatma: Sohbet / Ders',
-      `${sohbet.title} bugün ${sohbet.time} saatinde başlayacaktır.`
-    );
   };
 
   const loadAllData = async () => {
@@ -341,4 +333,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadAllData();
   };
 
-  const updateAdmin
+  const updateAdminPassword = async (id: string, newPassword: string) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('admins').update({ password: newPassword }).eq('id', id);
+    await loadAllData();
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        news,
+        staff,
+        sohbet,
+        settings,
+        inspiration,
+        admins,
+        currentAdmin,
+        loading,
+        isAdmin,
+        isInitialized,
+        login,
+        logout,
+        addNews,
+        updateNews,
+        deleteNews,
+        addStaff,
+        updateStaff,
+        deleteStaff,
+        addSohbet,
+        updateSohbet,
+        deleteSohbet,
+        updateSettings,
+        updateInspiration,
+        addAdmin,
+        deleteAdmin,
+        updateAdminPassword,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error('useApp, AppProvider içinde kullanılmalı');
+  return context;
+};
