@@ -29,15 +29,16 @@ import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
 import type { NewsItem, SohbetItem } from '../types';
 
-type NewsWithDbImage = NewsItem & { 
-  image_base64?: string; 
-  image_base_64?: string; 
-  imageBase64?: string; 
+type NewsWithDbImage = NewsItem & {
+  image_base64?: string;
+  image_base_64?: string;
+  imageBase64?: string;
 };
-type SohbetWithDbImage = SohbetItem & { 
-  image_base_64?: string; 
-  image_base64?: string; 
-  imageBase64?: string; 
+
+type SohbetWithDbImage = SohbetItem & {
+  image_base_64?: string;
+  image_base64?: string;
+  imageBase64?: string;
 };
 
 export function HomePage() {
@@ -144,8 +145,8 @@ export function HomePage() {
 
     const diff = target.getTime() - now.getTime();
     if (diff <= 0) {
-  return '🌙 Hayırlı İftarlar';
-}
+      return '🌙 Hayırlı İftarlar';
+    }
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff / (1000 * 60)) % 60);
@@ -337,29 +338,25 @@ export function HomePage() {
               <h2 className="font-serif text-lg text-[#C5A880]">RAMAZAN</h2>
             </div>
 
-           <p className="text-sm text-[#C5A880] font-medium mt-1 mb-3">
+            <p className="text-sm text-[#C5A880] font-medium mt-1 mb-3">
               Ramazan'ın {ramadanDay}. Günü
             </p>
 
             <div className="bg-[#FAF6F0]/10 rounded-2xl p-6 text-center mb-5 border border-[#C5A880]/20">
               <p className="text-sm text-[#C5A880] mb-4">
-  {getIftarCountdown().includes('Hayırlı')
-    ? 'İftar Vakti'
-    : 'İftara Kalan'}
-</p>
-              <p className="font-serif text-4xl font-bold text-[#C5A880] text-center leading-tight">
-                {getIftarCountdown().includes('Hayırlı') ? (
-  <div className="text-center">
-    <span className="font-serif text-[52px] font-bold text-[#C5A880] leading-tight">
-        Hayırlı
-        <br />
-        İftarlar
-    </span>
-</div>
-) : (
-  getIftarCountdown()
-)}
+                {getIftarCountdown().includes('Hayırlı') ? 'İftar Vakti' : 'İftara Kalan'}
               </p>
+              <div className="font-serif text-4xl font-bold text-[#C5A880] text-center leading-tight">
+                {getIftarCountdown().includes('Hayırlı') ? (
+                  <span className="font-serif text-[52px] font-bold text-[#C5A880] leading-tight">
+                    Hayırlı
+                    <br />
+                    İftarlar
+                  </span>
+                ) : (
+                  getIftarCountdown()
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -375,13 +372,14 @@ export function HomePage() {
             </div>
 
             {todaySohbet.length > 0 && (
-            <button
-  onClick={() => setSelectedSohbet(todaySohbet[0])}
- className="w-full mt-4 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
-  <Calendar size={18} />
-  <span>Bugünkü Program</span>
-  <ChevronRight size={18} />
-</button>
+              <button
+                onClick={() => setSelectedSohbet(todaySohbet[0])}
+                className="w-full mt-4 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
+              >
+                <Calendar size={18} />
+                <span>Bugünkü Program</span>
+                <ChevronRight size={18} />
+              </button>
             )}
           </div>
         </section>
@@ -414,7 +412,7 @@ export function HomePage() {
       )}
 
       <section className="px-4 mt-5">
-      <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1">
           <Mic size={18} className="text-[#C5A880]" />
           <h2 className="font-serif text-lg text-[#2D2A26]">Yaklaşan Sohbet / Ders</h2>
         </div>
@@ -524,5 +522,3 @@ export function HomePage() {
     </div>
   );
 }
-
-
