@@ -23,7 +23,7 @@ interface AppContextType {
   addSohbet: (item: any) => Promise<void>;
   updateSohbet: (id: string, item: any) => Promise<void>;
   deleteSohbet: (id: string) => Promise<void>;
-  sendSohbetReminder: (sohbet: any) => Promise<void>;
+  sendSohbetReminder: (item: any) => Promise<void>;
   updateSettings: (settings: any) => Promise<void>;
   updateInspiration: (updates: any) => Promise<void>;
   addAdmin: (admin: any) => Promise<void>;
@@ -93,10 +93,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const sendSohbetReminder = async (sohbet: any) => {
+  const sendSohbetReminder = async (item: any) => {
     await sendPush(
-      'Hatırlatma: Sohbet / Ders',
-      `${sohbet.title} bugün ${sohbet.time} saatinde başlayacaktır.`
+      `🔔 ${item.title}`,
+      `${item.date} ${item.time} - ${item.speaker}`
     );
   };
 
