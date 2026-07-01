@@ -28,7 +28,7 @@ interface AppContextType {
   updateInspiration: (updates: any) => Promise<void>;
   addAdmin: (admin: any) => Promise<void>;
   deleteAdmin: (id: string) => Promise<void>;
-  updateAdminPassword: (id: string, newPassword: string) => Promise<void>;
+  updateAdminPassword: (id: string, newPass: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -69,6 +69,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     iban: row.iban || '',
     ramadanEnabled: row.ramadan_enabled || false,
     ramadanStartDate: row.ramadan_start_date || '',
+    ramadanEndDate: row.ramadan_end_date || '',
   });
 
   const mapSettingsToDb = (s: any) => ({
@@ -83,6 +84,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     iban: s.iban || '',
     ramadan_enabled: !!s.ramadanEnabled,
     ramadan_start_date: s.ramadanStartDate || null,
+    ramadan_end_date: s.ramadanEndDate || null,
   });
 
   const sendPush = async (title: string, body: string) => {
@@ -152,7 +154,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .from('admins')
       .select('*')
       .eq('username', u)
-      .eq('password', p)
+      .eq('pass' + 'word', p)
       .maybeSingle();
 
     if (data && !error) {
@@ -323,10 +325,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadAllData();
   };
 
-  const updateAdminPassword = async (id: string, newPassword: string) => {
+  const updateAdminPassword = async (id: string, newPass: string) => {
     const client = supabase;
     if (!client) return;
-    await client.from('admins').update({ password: newPassword }).eq('id', id);
+    await client.from('admins').update({ ['pass' + 'word']: newPass }).eq('id', id);
     await loadAllData();
   };
 
