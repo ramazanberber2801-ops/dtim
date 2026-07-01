@@ -491,7 +491,9 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
   const [showPw, setShowPw] = useState(false);
   const [pwMsg, setPwMsg] = useState('');
 
-  const change = (key: string, value: string) => {
+  const isSuperadmin = currentAdmin?.role === 'superadmin';
+
+  const change = (key: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [key]: value }));
   };
 
@@ -528,6 +530,32 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
         <textarea className={`${inputClass} resize-none`} rows={3} value={form.address || ''} onChange={e => change('address', e.target.value)} placeholder="Adres" />
         <input className={inputClass} value={form.mapUrl || ''} onChange={e => change('mapUrl', e.target.value)} placeholder="Google Harita URL" />
         <input className={inputClass} value={form.fridayPrayer || ''} onChange={e => change('fridayPrayer', e.target.value)} placeholder="Cuma Namazı Saati" />
+
+        {isSuperadmin && (
+          <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+            <h3 className="font-serif text-lg">🌙 Ramazan Modülü</h3>
+
+            <label className="flex items-center gap-2 text-sm text-[#2D2A26]/70">
+              <input
+                type="checkbox"
+                checked={!!form.ramadanEnabled}
+                onChange={(e) => change('ramadanEnabled', e.target.checked)}
+              />
+              Ramazan Modu Aktif
+            </label>
+
+            <input
+              type="date"
+              className={inputClass}
+              value={form.ramadanStartDate || ''}
+              onChange={(e) => change('ramadanStartDate', e.target.value)}
+            />
+
+            <p className="text-xs text-[#2D2A26]/50">
+              İlk Ramazan gününü seçin. App günleri ve iftar sayacını otomatik hesaplar.
+            </p>
+          </div>
+        )}
 
         {saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}
 
@@ -789,3 +817,4 @@ function PushManager() {
     </div>
   );
 }
+
