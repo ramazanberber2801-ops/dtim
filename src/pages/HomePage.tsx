@@ -343,10 +343,19 @@ export function HomePage() {
 
             <div className="bg-[#FAF6F0]/10 rounded-2xl p-6 text-center mb-5 border border-[#C5A880]/20">
               <p className="text-sm text-[#C5A880] mb-2">
-                İftara Kalan
-              </p>
-              <p className="font-serif text-4xl font-bold text-[#C5A880] tabular-nums tracking-wide">
-                {getIftarCountdown()}
+  {getIftarCountdown().includes('Hayırlı')
+    ? 'İftar Vakti'
+    : 'İftara Kalan'}
+</p>
+              <p className="font-serif text-4xl font-bold text-[#C5A880] text-center leading-tight">
+                {getIftarCountdown().includes('Hayırlı') ? (
+  <div className="flex items-center justify-center gap-2">
+    <span className="text-5xl">🌙</span>
+    <span>Hayırlı İftarlar</span>
+  </div>
+) : (
+  getIftarCountdown()
+)}
               </p>
             </div>
 
