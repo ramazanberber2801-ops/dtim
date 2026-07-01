@@ -337,7 +337,7 @@ export function HomePage() {
               <h2 className="font-serif text-lg text-[#C5A880]">RAMAZAN</h2>
             </div>
 
-            <p className="text-base text-[#C5A880] font-medium mb-5">
+           <p className="text-base text-[#C5A880] font-medium mt-1 mb-4">
               Ramazan'ın {ramadanDay}. Günü
             </p>
 
@@ -349,10 +349,13 @@ export function HomePage() {
 </p>
               <p className="font-serif text-4xl font-bold text-[#C5A880] text-center leading-tight">
                 {getIftarCountdown().includes('Hayırlı') ? (
-  <div className="flex items-center justify-center gap-2">
-    <span className="text-5xl">🌙</span>
-    <span>Hayırlı İftarlar</span>
-  </div>
+  <div className="text-center">
+    <span className="font-serif text-5xl font-bold text-[#C5A880] leading-tight">
+        Hayırlı
+        <br />
+        İftarlar
+    </span>
+</div>
 ) : (
   getIftarCountdown()
 )}
@@ -410,7 +413,7 @@ export function HomePage() {
       )}
 
       <section className="px-4 mt-5">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-1">
           <Mic size={18} className="text-[#C5A880]" />
           <h2 className="font-serif text-lg text-[#2D2A26]">Yaklaşan Sohbet / Ders</h2>
         </div>
