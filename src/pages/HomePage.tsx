@@ -29,8 +29,16 @@ import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
 import type { NewsItem, SohbetItem } from '../types';
 
-type NewsWithDbImage = NewsItem & { image_base_64?: string };
-type SohbetWithDbImage = SohbetItem & { image_base_64?: string };
+type NewsWithDbImage = NewsItem & { 
+  image_base64?: string; 
+  image_base_64?: string; 
+  imageBase64?: string; 
+};
+type SohbetWithDbImage = SohbetItem & { 
+  image_base_64?: string; 
+  image_base64?: string; 
+  imageBase64?: string; 
+};
 
 export function HomePage() {
   const { news, sohbet, settings } = useApp();
@@ -456,7 +464,7 @@ export function HomePage() {
         ) : (
           <div className="space-y-2.5">
             {featuredNews.map((item) => {
-              const imageSrc = item.imageBase64 || item.image_base64;
+              const imageSrc = item.imageBase64 || item.image_base_64 || item.image_base64;
 
               return (
                 <button
