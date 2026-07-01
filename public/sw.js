@@ -77,3 +77,9 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(clients.openWindow(url));
 });
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
