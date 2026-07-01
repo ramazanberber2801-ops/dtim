@@ -23,6 +23,7 @@ interface AppContextType {
   addSohbet: (item: any) => Promise<void>;
   updateSohbet: (id: string, item: any) => Promise<void>;
   deleteSohbet: (id: string) => Promise<void>;
+  sendSohbetReminder: (sohbet: any) => Promise<void>;
   updateSettings: (settings: any) => Promise<void>;
   updateInspiration: (updates: any) => Promise<void>;
   addAdmin: (admin: any) => Promise<void>;
@@ -90,6 +91,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.error('PUSH ERROR:', e);
     }
+  };
+
+  const sendSohbetReminder = async (sohbet: any) => {
+    await sendPush(
+      'Hatırlatma: Sohbet / Ders',
+      `${sohbet.title} bugün ${sohbet.time} saatinde başlayacaktır.`
+    );
   };
 
   const loadAllData = async () => {
@@ -170,15 +178,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { error } = await client.from('news').insert([cleanItem]);
 
     if (error) {
-      console.error('NEWS INSERT ERROR:', error);
       alert('Haber eklenemedi: ' + error.message);
       return;
     }
 
-    if (shouldSendPush) {
-      await sendPush('Yeni Duyuru', cleanItem.title || 'Yeni haber yayınlandı');
-    }
-
+    if (shouldSendPush) await sendPush('Yeni Duyuru', cleanItem.title || 'Yeni haber yayınlandı');
     await loadAllData();
   };
 
@@ -197,17 +201,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
-    if (shouldSendPush) {
-      await sendPush('Duyuru Güncellendi', cleanItem.title || 'Bir duyuru güncellendi');
-    }
-
+    if (shouldSendPush) await sendPush('Duyuru Güncellendi', cleanItem.title || 'Bir duyuru güncellendi');
     await loadAllData();
   };
 
   const deleteNews = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('news').delete().eq('id', id);
     await loadAllData();
   };
@@ -215,7 +215,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addStaff = async (item: any) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('staff').insert([item]);
     await loadAllData();
   };
@@ -223,7 +222,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateStaff = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('staff').update(item).eq('id', id);
     await loadAllData();
   };
@@ -231,7 +229,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteStaff = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('staff').delete().eq('id', id);
     await loadAllData();
   };
@@ -247,15 +244,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { error } = await client.from('sohbet').insert([cleanItem]);
 
     if (error) {
-      console.error('SOHBET INSERT ERROR:', error);
       alert('Sohbet eklenemedi: ' + error.message);
       return;
     }
 
-    if (shouldSendPush) {
-      await sendPush('Yeni Sohbet / Ders', cleanItem.title || 'Yeni program yayınlandı');
-    }
-
+    if (shouldSendPush) await sendPush('Yeni Sohbet / Ders', cleanItem.title || 'Yeni program yayınlandı');
     await loadAllData();
   };
 
@@ -274,17 +267,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
-    if (shouldSendPush) {
-      await sendPush('Sohbet / Ders Güncellendi', cleanItem.title || 'Bir program güncellendi');
-    }
-
+    if (shouldSendPush) await sendPush('Sohbet / Ders Güncellendi', cleanItem.title || 'Bir program güncellendi');
     await loadAllData();
   };
 
   const deleteSohbet = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('sohbet').delete().eq('id', id);
     await loadAllData();
   };
@@ -305,7 +294,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateInspiration = async (updates: any) => {
     const client = supabase;
     if (!client || !inspiration?.id) return;
-
     await client.from('inspiration').update(updates).eq('id', inspiration.id);
     await loadAllData();
   };
@@ -317,7 +305,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { error } = await client.from('admins').insert([admin]);
 
     if (error) {
-      console.error('ADMIN INSERT ERROR:', error);
       alert('Admin eklenemedi: ' + error.message);
       return;
     }
@@ -328,7 +315,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteAdmin = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('admins').delete().eq('id', id);
     await loadAllData();
   };
@@ -336,7 +322,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateAdminPassword = async (id: string, newPassword: string) => {
     const client = supabase;
     if (!client) return;
-
     await client.from('admins').update({ password: newPassword }).eq('id', id);
     await loadAllData();
   };
@@ -365,6 +350,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSohbet,
         updateSohbet,
         deleteSohbet,
+        sendSohbetReminder,
         updateSettings,
         updateInspiration,
         addAdmin,
