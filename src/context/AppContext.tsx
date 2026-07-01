@@ -67,6 +67,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     whatsappNumber: row.whatsapp_number || '',
     bankAccount: row.bank_account || '',
     iban: row.iban || '',
+    ramadanEnabled: row.ramadan_enabled || false,
+    ramadanStartDate: row.ramadan_start_date || '',
   });
 
   const mapSettingsToDb = (s: any) => ({
@@ -79,6 +81,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     whatsapp_number: s.whatsappNumber || '',
     bank_account: s.bankAccount || '',
     iban: s.iban || '',
+    ramadan_enabled: !!s.ramadanEnabled,
+    ramadan_start_date: s.ramadanStartDate || null,
   });
 
   const sendPush = async (title: string, body: string) => {
