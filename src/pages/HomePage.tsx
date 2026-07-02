@@ -415,7 +415,10 @@ export function HomePage() {
 
             {todaySohbet.length > 0 && (
               <button
-                onClick={() => setSelectedSohbet(todaySohbet[0])}
+                onClick={() => {
+                  trackEvent('sohbet_open', todaySohbet[0].id, todaySohbet[0].title);
+                  setSelectedSohbet(todaySohbet[0]);
+                }}
                 className="w-full mt-4 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
               >
                 <Calendar size={18} />
@@ -475,7 +478,10 @@ export function HomePage() {
 
             {todaySohbet.length > 0 && (
               <button
-                onClick={() => setSelectedSohbet(todaySohbet[0])}
+                onClick={() => {
+                  trackEvent('sohbet_open', todaySohbet[0].id, todaySohbet[0].title);
+                  setSelectedSohbet(todaySohbet[0]);
+                }}
                 className="w-full mt-5 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
               >
                 <Calendar size={18} />
@@ -529,7 +535,10 @@ export function HomePage() {
             {upcomingSohbet.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setSelectedSohbet(item)}
+                onClick={() => {
+                  trackEvent('sohbet_open', item.id, item.title);
+                  setSelectedSohbet(item);
+                }}
                 className="w-full bg-white rounded-xl border border-[#C5A880]/20 flex text-left overflow-hidden"
               >
                 <div className="w-16 shrink-0 bg-[#2D2A26] flex flex-col items-center justify-center text-[#FAF6F0] py-3">
@@ -584,7 +593,10 @@ export function HomePage() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setSelectedNews(item)}
+                  onClick={() => {
+                    trackEvent('news_open', item.id, item.title);
+                    setSelectedNews(item);
+                  }}
                   className="w-full bg-white rounded-xl border border-[#C5A880]/20 flex text-left p-2"
                 >
                   {imageSrc ? (
