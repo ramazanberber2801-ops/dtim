@@ -2,7 +2,7 @@ import { useState, useRef, type FormEvent } from 'react';
 import {
   X, Newspaper, Users, LogOut, Trash2, Edit3, Plus,
   Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon,
-  UserCog, Check, Eye, EyeOff, Bell
+  UserCog, Check, Eye, EyeOff, Bell, BarChart3
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fileToOptimizedBase64 } from '../lib/imageUtils';
@@ -15,7 +15,8 @@ type AdminTab =
   | 'staff'
   | 'settings'
   | 'admins'
-  | 'push';
+  | 'push'
+  | 'stats';
 
 const inputClass =
   "w-full px-4 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880]";
@@ -47,6 +48,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
     { id: 'settings' as AdminTab, label: 'Ayarlar', icon: SettingsIcon },
     { id: 'admins' as AdminTab, label: 'Yöneticiler', icon: UserCog },
     { id: 'push' as AdminTab, label: 'Bildirim', icon: Bell },
+    { id: 'stats' as AdminTab, label: 'İstatistik', icon: BarChart3 },
   ];
 
   return (
@@ -100,6 +102,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
         {tab === 'settings' && <SettingsManager settings={settings} onUpdate={updateSettings} currentAdmin={currentAdmin} onUpdatePassword={updateAdminPassword} />}
         {tab === 'admins' && <AdminsManager admins={admins} onAdd={addAdmin} onDelete={deleteAdmin} isSuperadmin={isSuperadmin} />}
         {tab === 'push' && <PushManager />}
+        {tab === 'stats' && <StatsManager />}
       </main>
     </div>
   );
@@ -858,6 +861,23 @@ function PushManager() {
         >
           {sending ? 'Gönderiliyor...' : '📢 Bildirim Gönder'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function StatsManager() {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <BarChart3 size={20} className="text-[#C5A880]" />
+        <h2 className="font-serif text-xl text-[#2D2A26]">İstatistik</h2>
+      </div>
+
+      <div className="bg-white rounded-xl p-5 border-2 border-[#C5A880]/25 shadow-sm">
+        <p className="text-sm text-[#2D2A26]/60 leading-relaxed">
+          Statistik-fanen er klar. Neste steg er å hente data fra analytics_events og vise tallene her.
+        </p>
       </div>
     </div>
   );
