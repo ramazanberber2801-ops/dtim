@@ -457,7 +457,7 @@ function StaffForm({ item, onAdd, onUpdate, onClose }: any) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return setError('İsim zorunludur.');
+    if (!name.trim()) return setError('İsim zorununludur.');
     if (!position.trim()) return setError('Görev zorunludur.');
 
     const data = { name, position, phone };
@@ -867,97 +867,73 @@ function PushManager() {
 }
 
 function StatsManager() {
-  const [stats, setStats] = useState({
-    today: 0,
-    last7: 0,
-    last30: 0,
-    total: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadStats = async () => {
-      const client = supabase;
-      if (!client) {
-        setLoading(false);
-        return;
-      }
-
-      const now = new Date();
-      const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0);
-
-      const sevenDaysAgo = new Date(now);
-      sevenDaysAgo.setDate(now.getDate() - 7);
-
-      const thirtyDaysAgo = new Date(now);
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-
-      try {
-        // Toplam sayıyı tüm verileri çekmeden sadece sunucu tarafında saydırıyoruz
-        const { count: totalCount, error: totalError } = await client
-          .from('analytics_events')
-          .select('*', { count: 'exact', head: true });
-
-        if (totalError) throw totalError;
-
-        // Sadece son 30 günün datasını çekerek ciddi bir veri ve hız tasarrufu sağlıyoruz
-        const { data, error } = await client
-          .from('analytics_events')
-          .select('created_at')
-          .gte('created_at', thirtyDaysAgo.toISOString());
-
-        if (error) throw error;
-
-        const dates = (data || []).map((event: any) => new Date(event.created_at));
-
-        setStats({
-          today: dates.filter((date) => date >= todayStart).length,
-          last7: dates.filter((date) => date >= sevenDaysAgo).length,
-          last30: dates.length,
-          total: totalCount || 0,
-        });
-      } catch (err) {
-        console.error("İstatistik yüklenirken hata oluştu:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadStats();
   }, []);
 
+  async function loadStats() {
+    if (!supabase) return;
+
+    const { data } = await supabase
+      .from('analytics_events')
+      .select('event_type, created_at');
+
+    if (data) setEvents(data);
+  }
+
   const cards = [
-    { label: 'Bugün', value: stats.today, icon: '📅' },
-    { label: 'Son 7 Gün', value: stats.last7, icon: '📅' },
-    { label: 'Son 30 Gün', value: stats.last30, icon: '📅' },
-    { label: 'Toplam', value: stats.total, icon: '🏆' },
+    { label: 'App Açıldı', key: 'app_open', icon: '📱' },
+    { label: 'Haber Açıldı', key: 'news_open', icon: '📰' },
+    { label: 'Sohbet Açıldı', key: 'sohbet_open', icon: '🎤' },
+    { label: 'Bağış', key: 'donation_click', icon: '❤️' },
+    { label: 'İletişim', key: 'contact_click', icon: '📞' },
+    { label: 'Kurulum', key: 'install_click', icon: '📲' },
+    { label: 'Bildirim', key: 'push_sent', icon: '🔔' },
+  ];
+
+  const countForRange = (key: string, days?: number) => {
+    const now = new Date();
+    const start = days
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - days + 1)
+      : null;
+
+    return events.filter((e) => {
+      if (e.event_type !== key) return false;
+      if (!start) return true;
+      return new Date(e.created_at) >= start;
+    }).length;
+  };
+
+  const sections = [
+    { title: '📅 Bugün', days: 1 },
+    { title: '📅 Son 7 Gün', days: 7 },
+    { title: '📅 Son 30 Gün', days: 30 },
+    { title: '🏆 Toplam', days: undefined },
   ];
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <BarChart3 size={20} className="text-[#C5A880]" />
-        <h2 className="font-serif text-xl text-[#2D2A26]">İstatistik</h2>
-      </div>
+    <div className="p-4 space-y-5">
+      <h2 className="font-serif text-xl">İstatistik</h2>
 
-      {loading ? (
-        <div className="bg-white rounded-xl p-5 border-2 border-[#C5A880]/25 shadow-sm">
-          <p className="text-sm text-[#2D2A26]/60">İstatistik yükleniyor...</p>
+      {sections.map((section) => (
+        <div key={section.title} className="bg-white rounded-xl border-2 border-[#C5A880]/20 p-4">
+          <h3 className="font-serif text-lg mb-3 text-[#2D2A26]">{section.title}</h3>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cards.map((card) => (
+              <div key={card.key} className="bg-[#FAF6F0] rounded-xl p-3">
+                <div className="text-xl mb-1">{card.icon}</div>
+                <p className="text-[11px] text-[#2D2A26]/50 Regel">{card.label}</p>
+                <p className="font-serif text-xl text-[#2D2A26]">
+                  {countForRange(card.key, section.days)}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {cards.map((card) => (
-            <div
-              key={card.label}
-              className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 shadow-sm"
-            >
-              <p className="text-xs text-[#2D2A26]/50">{card.icon} {card.label}</p>
-              <p className="font-serif text-2xl text-[#2D2A26] mt-1">{card.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      ))}
     </div>
   );
 }
