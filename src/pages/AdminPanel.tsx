@@ -1,4 +1,4 @@
-import { useState, useRef, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import {
   X, Newspaper, Users, LogOut, Trash2, Edit3, Plus,
   Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon,
