@@ -587,7 +587,10 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
       type="date"
       className={inputClass}
       value={form.kurbanStartDate || ''}
-      onChange={(e) => change('kurbanStartDate', e.target.value)}
+      onChange={(e) => {
+  change('kurbanStartDate', e.target.value);
+  change('kurbanEnabled', !!e.target.value);
+}}
     />
 
     <p className="text-xs text-[#2D2A26]/50">
