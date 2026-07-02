@@ -27,6 +27,7 @@ import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
+import { trackEvent } from '../lib/analytics';
 import type { NewsItem, SohbetItem } from '../types';
 
 type NewsWithDbImage = NewsItem & {
@@ -70,6 +71,10 @@ export function HomePage() {
 
   const [selectedNews, setSelectedNews] = useState<NewsWithDbImage | null>(null);
   const [selectedSohbet, setSelectedSohbet] = useState<SohbetWithDbImage | null>(null);
+
+  useEffect(() => {
+    trackEvent('app_open');
+  }, []);
 
   useEffect(() => {
     async function fetchDailyInspiration() {
