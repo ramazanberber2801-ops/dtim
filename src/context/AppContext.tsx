@@ -70,6 +70,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ramadanEnabled: row.ramadan_enabled || false,
     ramadanStartDate: row.ramadan_start_date || '',
     ramadanEndDate: row.ramadan_end_date || '',
+    kurbanEnabled: row.kurban_enabled || false,
+    kurbanStartDate: row.kurban_start_date || '',
   });
 
   const mapSettingsToDb = (s: any) => ({
@@ -85,6 +87,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ramadan_enabled: !!s.ramadanEnabled,
     ramadan_start_date: s.ramadanStartDate || null,
     ramadan_end_date: s.ramadanEndDate || null,
+    kurban_enabled: s.kurbanEnabled || false,
+    kurban_start_date: s.kurbanStartDate || null,
   });
 
   const sendPush = async (title: string, body: string) => {
