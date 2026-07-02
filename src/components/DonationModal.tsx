@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HandCoins, X, Copy, Check, Sparkles, ExternalLink } from 'lucide-react';
+import { trackEvent } from '../lib/analytics';
 
 interface DonationModalProps {
   open: boolean;
@@ -79,6 +80,7 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
             href={vippsDeepLink}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackEvent('donation_click', vippsNumber, 'Vipps')}
             className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98]"
           >
             <ExternalLink size={18} />
