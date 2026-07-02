@@ -21,6 +21,10 @@ export function ContactPage() {
   const [notificationLoading, setNotificationLoading] = useState(false);
 
   useEffect(() => {
+    trackEvent('contact_click', 'page', 'İletişim Sayfası');
+  }, []);
+
+  useEffect(() => {
     async function checkSubscription() {
       if (!('serviceWorker' in navigator)) return;
 
