@@ -167,15 +167,15 @@ function NewsManager({ items, onAdd, onUpdate, onDelete }: any) {
   if (showForm || editing) {
     return <NewsForm item={editing} onAdd={onAdd} onUpdate={onUpdate} onClose={() => { setEditing(null); setShowForm(false); }} />;
   }
-
-  return (
+return (
     <div className="p-4">
       <AddButton label="Yeni Haber Ekle" onClick={() => setShowForm(true)} />
 
       {items.length === 0 ? <EmptyState text="Henüz haber eklenmemiş." /> : (
         <div className="space-y-3">
           {items.map((item: any) => {
-            const imageSrc = item.imageBase64 || item.;
+            // 178. Satır Düzeltildi: "item." yerine "item.image" yazıldı
+            const imageSrc = item.imageBase64 || item.image;
             return (
               <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3">
                 {imageSrc && <img src={imageSrc} className="w-16 h-16 rounded-lg object-cover" />}
@@ -200,7 +200,8 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
   const [title, setTitle] = useState(item?.title || '');
   const [content, setContent] = useState(item?.content || '');
   const [category, setCategory] = useState(item?.category || 'Duyuru');
-  const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?. || '');
+  // 203. Satır Düzeltildi: "item?." yerine "item?.image" yazıldı
+  const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?.image || '');
   const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
