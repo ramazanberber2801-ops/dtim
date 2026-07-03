@@ -49,7 +49,8 @@ function AppContent() {
   }, [isInitialized, isAdmin, currentAdmin]);
 
   useEffect(() => {
-    if (!isInitialized || !supabase) return;
+    const client = supabase;
+    if (!isInitialized || !client) return;
 
     const params = new URLSearchParams(window.location.search);
     const messageId = params.get('push_message');
@@ -57,7 +58,7 @@ function AppContent() {
     if (!messageId) return;
 
     async function loadPushMessage() {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('push_messages')
         .select('id, title, body, expires_at')
         .eq('id', messageId)
