@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Missing environment variables' });
   }
 
-  const { title, body, url } = req.body || {};
+  const { title, body, url, message_id } = req.body || {};
 
   if (!title || !body) {
     return res.status(400).json({ error: 'Missing title or body' });
