@@ -62,10 +62,10 @@ self.addEventListener('push', (event) => {
     body: data.body || 'Yeni bildirim var.',
     icon: '/images/dtim-logo.svg',
     badge: '/images/dtim-logo.svg',
-    data: {
-      url: data.url || '/',
-    },
-  };
+   data: {
+  url: data.url || '/',
+  message_id: data.message_id || null,
+},
 
   event.waitUntil(self.registration.showNotification(title, options));
 });
