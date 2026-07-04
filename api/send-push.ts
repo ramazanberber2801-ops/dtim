@@ -3,7 +3,7 @@ import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
@@ -12,11 +12,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!supabaseUrl || !supabaseAnonKey || !vapidPublicKey || !vapidPrivateKey) {
+  if (!supabaseUrl || !supabaseServiceRoleKey || !vapidPublicKey || !vapidPrivateKey) {
     return res.status(500).json({ error: 'Missing environment variables' });
   }
 
-  const { title, body, url, message_id } = req.body || {};
+  const { title, body, url } = req.body || {};
 
   if (!title || !body) {
     return res.status(400).json({ error: 'Missing title or body' });
@@ -28,7 +28,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     vapidPrivateKey
   );
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const cleanTitle = String(title).trim();
+  const cleanBody = String(body).trim();
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
+  const { data: savedMessage, error: messageError } = await supabase
+    .from('push_messages')
+    .insert({
+      title: cleanTitle,
+      body: cleanBody,
+      expires_at: expiresAt,
+    })
+    .select('id')
+    .single();
+
+  if (messageError || !savedMessage) {
+    return res.status(500).json({ error: messageError?.message || 'Push message could not be saved' });
+  }
+
+  const messageId = savedMessage.id;
+  const notificationUrl = url || `/?push_message=${messageId}`;
 
   const { data, error } = await supabase
     .from('push_subscriptions')
@@ -38,12 +58,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: error.message });
   }
 
-const payload = JSON.stringify({
-  title,
-  body,
-  url: url || '/',
-  message_id: message_id || null,
-});
+  const payload = JSON.stringify({
+    title: cleanTitle,
+    body: cleanBody,
+    url: notificationUrl,
+    message_id: messageId,
+  });
 
   let sent = 0;
   let failed = 0;
@@ -59,5 +79,5 @@ const payload = JSON.stringify({
     })
   );
 
-  return res.status(200).json({ ok: true, sent, failed });
+  return res.status(200).json({ ok: true, sent, failed, message_id: messageId });
 }
