@@ -10,8 +10,16 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: BottomNavProps) {
+  const inactiveColor = 'color-mix(in srgb, var(--brand-text) 40%, transparent)';
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#FAF6F0]/95 backdrop-blur-md border-t border-[#C5A880]/20">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t"
+      style={{
+        backgroundColor: 'color-mix(in srgb, var(--brand-background) 95%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--brand-primary) 20%, transparent)',
+      }}
+    >
       <div className="max-w-md mx-auto px-4 pt-2 pb-3 pb-[env(safe-area-inset-bottom)] relative">
         <div className="flex items-center justify-around relative">
           <button
@@ -20,10 +28,13 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: Bo
           >
             <Home
               size={22}
-              className={current === 'home' ? 'text-[#C5A880]' : 'text-[#2D2A26]/40'}
+              style={{ color: current === 'home' ? 'var(--brand-primary)' : inactiveColor }}
               strokeWidth={current === 'home' ? 2.5 : 2}
             />
-            <span className={`text-[10px] font-medium ${current === 'home' ? 'text-[#C5A880]' : 'text-[#2D2A26]/40'}`}>
+            <span
+              className="text-[10px] font-medium"
+              style={{ color: current === 'home' ? 'var(--brand-primary)' : inactiveColor }}
+            >
               Ana Sayfa
             </span>
           </button>
@@ -31,12 +42,17 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: Bo
           <div className="flex flex-col items-center -mt-6">
             <button
               onClick={onDonate}
-              className="w-16 h-16 rounded-full bg-gradient-to-br from-[#C5A880] to-[#B8935A] shadow-lg shadow-[#C5A880]/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border-4 border-[#FAF6F0]"
+              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border-4"
+              style={{
+                background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 80%, #000 20%))',
+                boxShadow: '0 10px 20px color-mix(in srgb, var(--brand-primary) 30%, transparent)',
+                borderColor: 'var(--brand-background)',
+              }}
               aria-label="Bağış Yap"
             >
-              <HandCoins size={26} className="text-white" />
+              <HandCoins size={26} style={{ color: 'var(--brand-primary-text)' }} />
             </button>
-            <span className="text-[10px] font-medium text-[#C5A880] mt-1">Bağış</span>
+            <span className="text-[10px] font-medium mt-1" style={{ color: 'var(--brand-primary)' }}>Bağış</span>
           </div>
 
           <button
@@ -45,10 +61,13 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: Bo
           >
             <Phone
               size={22}
-              className={current === 'contact' ? 'text-[#C5A880]' : 'text-[#2D2A26]/40'}
+              style={{ color: current === 'contact' ? 'var(--brand-primary)' : inactiveColor }}
               strokeWidth={current === 'contact' ? 2.5 : 2}
             />
-            <span className={`text-[10px] font-medium ${current === 'contact' ? 'text-[#C5A880]' : 'text-[#2D2A26]/40'}`}>
+            <span
+              className="text-[10px] font-medium"
+              style={{ color: current === 'contact' ? 'var(--brand-primary)' : inactiveColor }}
+            >
               İletişim
             </span>
           </button>
