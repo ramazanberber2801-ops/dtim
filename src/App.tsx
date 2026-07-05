@@ -8,7 +8,6 @@ import { InstallButton } from './components/InstallButton';
 import { InstallGuideModal } from './components/InstallGuideModal';
 import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
-import { SecuritySetupModal } from './components/SecuritySetupModal';
 import { supabase } from './lib/supabase';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
@@ -21,32 +20,23 @@ type PushMessage = {
 };
 
 function AppContent() {
-  const { isAdmin, isInitialized, currentAdmin } = useApp();
+  const { isAdmin, isInitialized } = useApp();
   const [page, setPage] = useState<Page>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [showSecuritySetup, setShowSecuritySetup] = useState(false);
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
 
-  // Enhetlig logikk for å styre panel- og sikkerhetsmodal-visning
   useEffect(() => {
     if (isInitialized && isAdmin) {
-      if (currentAdmin && (!currentAdmin.security_question || !currentAdmin.security_answer)) {
-        setShowSecuritySetup(true);
-        setShowPanel(false);
-      } else {
-        setShowSecuritySetup(false);
-        setShowPanel(true);
-      }
+      setShowPanel(true);
     } else {
-      setShowSecuritySetup(false);
       setShowPanel(false);
     }
-  }, [isInitialized, isAdmin, currentAdmin]);
+  }, [isInitialized, isAdmin]);
 
   useEffect(() => {
     if (!isInitialized || !supabase) return;
@@ -134,16 +124,6 @@ function AppContent() {
         onClose={() => setShowInstallGuide(false)}
         browser={guideBrowser}
         platform={guidePlatform}
-      />
-
-      {/* Sikkerhetsmodal uten onClose prop da komponenten din ikke støtter den */}
-      <SecuritySetupModal
-        open={showSecuritySetup}
-        admin={currentAdmin}
-        onDone={() => {
-          setShowSecuritySetup(false);
-          setShowPanel(true);
-        }}
       />
 
       {pushMessage && (
