@@ -203,6 +203,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentAdmin(safeAdmin);
     setIsAdmin(true);
     localStorage.setItem('dtim_admin', JSON.stringify(safeAdmin));
+    await loadAllData();
     return true;
   };
 
@@ -254,28 +255,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteNews = async (id: string) => {
     const client = supabase;
     if (!client) return;
-    await client.from('news').delete().eq('id', id);
+
+    const { error } = await client.from('news').delete().eq('id', id);
+    if (error) {
+      alert('Haber silinemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
   const addStaff = async (item: any) => {
     const client = supabase;
     if (!client) return;
-    await client.from('staff').insert([item]);
+
+    const cleanItem = {
+      id: item.id || `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      ...item,
+    };
+
+    const { error } = await client.from('staff').insert([cleanItem]);
+
+    if (error) {
+      alert('Yönetim üyesi eklenemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
   const updateStaff = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-    await client.from('staff').update(item).eq('id', id);
+
+    const { error } = await client.from('staff').update(item).eq('id', id);
+
+    if (error) {
+      alert('Yönetim üyesi güncellenemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
   const deleteStaff = async (id: string) => {
     const client = supabase;
     if (!client) return;
-    await client.from('staff').delete().eq('id', id);
+
+    const { error } = await client.from('staff').delete().eq('id', id);
+
+    if (error) {
+      alert('Yönetim üyesi silinemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
@@ -320,27 +353,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteSohbet = async (id: string) => {
     const client = supabase;
     if (!client) return;
-    await client.from('sohbet').delete().eq('id', id);
+
+    const { error } = await client.from('sohbet').delete().eq('id', id);
+    if (error) {
+      alert('Sohbet silinemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
   const updateSettings = async (s: any) => {
-    setSettings(s);
-
     const client = supabase;
     if (!client) return;
 
     const dbSettings = mapSettingsToDb(s);
-    const id = s.id || 1;
+    const id = s.id || settings.id || 1;
 
-    await client.from('settings').update(dbSettings).eq('id', id);
+    const { data, error } = await client
+      .from('settings')
+      .update(dbSettings)
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      alert('Ayarlar kaydedilemedi: ' + error.message);
+      return;
+    }
+
+    if (!data) {
+      alert('Ayarlar kaydedilemedi: settings satırı bulunamadı.');
+      return;
+    }
+
+    setSettings(mapSettingsFromDb(data));
     await loadAllData();
   };
 
   const updateInspiration = async (updates: any) => {
     const client = supabase;
     if (!client || !inspiration?.id) return;
-    await client.from('inspiration').update(updates).eq('id', inspiration.id);
+
+    const { error } = await client.from('inspiration').update(updates).eq('id', inspiration.id);
+    if (error) {
+      alert('İlham metni güncellenemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
@@ -369,7 +429,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteAdmin = async (id: string) => {
     const client = supabase;
     if (!client) return;
-    await client.from('admins').delete().eq('id', id);
+
+    const { error } = await client.from('admins').delete().eq('id', id);
+    if (error) {
+      alert('Admin silinemedi: ' + error.message);
+      return;
+    }
+
     await loadAllData();
   };
 
