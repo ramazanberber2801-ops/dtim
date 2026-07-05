@@ -110,21 +110,11 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 }
 
 function ActionButtons({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <button onClick={onEdit} className="w-8 h-8 rounded-lg bg-[#C5A880]/10 flex items-center justify-center"><Edit3 size={14} className="text-[#C5A880]" /></button>
-      <button onClick={onDelete} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button>
-    </div>
-  );
+  return <div className="flex flex-col gap-1.5"><button onClick={onEdit} className="w-8 h-8 rounded-lg bg-[#C5A880]/10 flex items-center justify-center"><Edit3 size={14} className="text-[#C5A880]" /></button><button onClick={onDelete} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button></div>;
 }
 
 function SaveCancelButtons({ onCancel }: { onCancel: () => void }) {
-  return (
-    <div className="flex gap-3">
-      <button type="button" onClick={onCancel} className="flex-1 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-sm">İptal</button>
-      <button type="submit" className="flex-1 py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2"><Save size={16} /> Kaydet</button>
-    </div>
-  );
+  return <div className="flex gap-3"><button type="button" onClick={onCancel} className="flex-1 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-sm">İptal</button><button type="submit" className="flex-1 py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2"><Save size={16} /> Kaydet</button></div>;
 }
 
 function EmptyState({ text }: { text: string }) {
@@ -134,30 +124,8 @@ function EmptyState({ text }: { text: string }) {
 function NewsManager({ items, onAdd, onUpdate, onDelete }: any) {
   const [editing, setEditing] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
-
-  if (showForm || editing) {
-    return <NewsForm item={editing} onAdd={onAdd} onUpdate={onUpdate} onClose={() => { setEditing(null); setShowForm(false); }} />;
-  }
-
-  return (
-    <div className="p-4">
-      <AddButton label="Yeni Haber Ekle" onClick={() => setShowForm(true)} />
-      {items.length === 0 ? <EmptyState text="Henüz haber eklenmemiş." /> : (
-        <div className="space-y-3">
-          {items.map((item: any) => {
-            const imageSrc = item.imageBase64 || item.image_base64;
-            return (
-              <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3">
-                {imageSrc && <img src={imageSrc} className="w-16 h-16 rounded-lg object-cover" />}
-                <div className="flex-1 min-w-0"><span className="text-[10px] text-[#C5A880] uppercase">{item.category}</span><h3 className="font-serif text-sm truncate">{item.title}</h3><p className="text-xs text-[#2D2A26]/50 truncate">{item.content}</p></div>
-                <ActionButtons onEdit={() => setEditing(item)} onDelete={() => { if (confirm('Bu haberi silmek istiyor musunuz?')) onDelete(item.id); }} />
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  if (showForm || editing) return <NewsForm item={editing} onAdd={onAdd} onUpdate={onUpdate} onClose={() => { setEditing(null); setShowForm(false); }} />;
+  return <div className="p-4"><AddButton label="Yeni Haber Ekle" onClick={() => setShowForm(true)} />{items.length === 0 ? <EmptyState text="Henüz haber eklenmemiş." /> : <div className="space-y-3">{items.map((item: any) => { const imageSrc = item.imageBase64 || item.image_base64; return <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3">{imageSrc && <img src={imageSrc} className="w-16 h-16 rounded-lg object-cover" />}<div className="flex-1 min-w-0"><span className="text-[10px] text-[#C5A880] uppercase">{item.category}</span><h3 className="font-serif text-sm truncate">{item.title}</h3><p className="text-xs text-[#2D2A26]/50 truncate">{item.content}</p></div><ActionButtons onEdit={() => setEditing(item)} onDelete={() => { if (confirm('Bu haberi silmek istiyor musunuz?')) onDelete(item.id); }} /></div>; })}</div>}</div>;
 }
 
 function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
@@ -168,63 +136,16 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
   const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const uploadImage = async (e: any) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const base64 = await fileToOptimizedBase64(file);
-    setImageBase64(base64);
-    if (fileRef.current) fileRef.current.value = '';
-  };
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return setError('Başlık zorunludur.');
-    if (!content.trim()) return setError('İçerik zorunludur.');
-
-    const data = {
-      id: item?.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title: title.trim(),
-      content: content.trim(),
-      category,
-      image_base64: imageBase64,
-      date: item?.date || new Date().toISOString(),
-      _sendPush: sendPush,
-    };
-
-    if (item) await onUpdate(item.id, data);
-    else await onAdd(data);
-    onClose();
-  };
-
-  return (
-    <div className="p-4"><BackButton onClick={onClose} />
-      <form onSubmit={submit} className="space-y-4">
-        <h2 className="font-serif text-xl">{item ? 'Haberi Düzenle' : 'Yeni Haber'}</h2>
-        {imageBase64 ? <div className="relative"><img src={imageBase64} className="w-full h-40 object-cover rounded-xl" /><button type="button" onClick={() => setImageBase64('')} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2"><Trash2 size={14} /></button></div> : <label className="h-32 border-2 border-dashed border-[#C5A880]/30 rounded-xl flex flex-col items-center justify-center cursor-pointer"><Upload size={20} className="text-[#C5A880]" /><span className="text-xs text-[#2D2A26]/50">Resim seç</span><input ref={fileRef} type="file" accept="image/*" onChange={uploadImage} className="hidden" /></label>}
-        <input className={inputClass} value={title} onChange={e => setTitle(e.target.value)} placeholder="Başlık" />
-        <select className={inputClass} value={category} onChange={e => setCategory(e.target.value)}><option>Duyuru</option><option>Etkinlik</option><option>Eğitim</option><option>Ramazan</option><option>Diğer</option></select>
-        <textarea className={`${inputClass} resize-none`} rows={6} value={content} onChange={e => setContent(e.target.value)} placeholder="İçerik" />
-        <label className="flex items-center gap-2 text-xs text-[#2D2A26]/70 bg-white rounded-lg border border-[#C5A880]/20 p-3"><input type="checkbox" checked={sendPush} onChange={(e) => setSendPush(e.target.checked)} />Bildirim Gönder</label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <SaveCancelButtons onCancel={onClose} />
-      </form>
-    </div>
-  );
+  const uploadImage = async (e: any) => { const file = e.target.files?.[0]; if (!file) return; const base64 = await fileToOptimizedBase64(file); setImageBase64(base64); if (fileRef.current) fileRef.current.value = ''; };
+  const submit = async (e: FormEvent) => { e.preventDefault(); if (!title.trim()) return setError('Başlık zorunludur.'); if (!content.trim()) return setError('İçerik zorunludur.'); const data = { id: item?.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title: title.trim(), content: content.trim(), category, image_base64: imageBase64, date: item?.date || new Date().toISOString(), _sendPush: sendPush }; if (item) await onUpdate(item.id, data); else await onAdd(data); onClose(); };
+  return <div className="p-4"><BackButton onClick={onClose} /><form onSubmit={submit} className="space-y-4"><h2 className="font-serif text-xl">{item ? 'Haberi Düzenle' : 'Yeni Haber'}</h2>{imageBase64 ? <div className="relative"><img src={imageBase64} className="w-full h-40 object-cover rounded-xl" /><button type="button" onClick={() => setImageBase64('')} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2"><Trash2 size={14} /></button></div> : <label className="h-32 border-2 border-dashed border-[#C5A880]/30 rounded-xl flex flex-col items-center justify-center cursor-pointer"><Upload size={20} className="text-[#C5A880]" /><span className="text-xs text-[#2D2A26]/50">Resim seç</span><input ref={fileRef} type="file" accept="image/*" onChange={uploadImage} className="hidden" /></label>}<input className={inputClass} value={title} onChange={e => setTitle(e.target.value)} placeholder="Başlık" /><select className={inputClass} value={category} onChange={e => setCategory(e.target.value)}><option>Duyuru</option><option>Etkinlik</option><option>Eğitim</option><option>Ramazan</option><option>Diğer</option></select><textarea className={`${inputClass} resize-none`} rows={6} value={content} onChange={e => setContent(e.target.value)} placeholder="İçerik" /><label className="flex items-center gap-2 text-xs text-[#2D2A26]/70 bg-white rounded-lg border border-[#C5A880]/20 p-3"><input type="checkbox" checked={sendPush} onChange={e => setSendPush(e.target.checked)} />Bildirim Gönder</label>{error && <p className="text-sm text-red-600">{error}</p>}<SaveCancelButtons onCancel={onClose} /></form></div>;
 }
 
 function SohbetManager({ items, onAdd, onUpdate, onDelete, onReminder }: any) {
   const [editing, setEditing] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
-
   if (showForm || editing) return <SohbetForm item={editing} onAdd={onAdd} onUpdate={onUpdate} onClose={() => { setEditing(null); setShowForm(false); }} />;
-
-  return (
-    <div className="p-4">
-      <AddButton label="Yeni Sohbet / Ders Ekle" onClick={() => setShowForm(true)} />
-      {items.length === 0 ? <EmptyState text="Henüz sohbet/ders eklenmemiş." /> : <div className="space-y-3">{items.map((item: any) => <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3"><div className="w-14 h-14 rounded-lg bg-[#2D2A26] text-[#FAF6F0] flex flex-col items-center justify-center"><span className="text-[9px] text-[#C5A880]">{item.date}</span><span className="font-serif text-sm">{item.time}</span></div><div className="flex-1 min-w-0"><h3 className="font-serif text-sm truncate">{item.title}</h3><p className="text-xs text-[#2D2A26]/50 truncate">{item.description}</p><p className="text-[10px] text-[#2D2A26]/40">{item.speaker}</p></div><div className="flex flex-col gap-1.5"><button onClick={() => { if (confirm('Bu program için hatırlatma gönderilsin mi?')) onReminder(item); }} className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm">🔔</button><button onClick={() => setEditing(item)} className="w-8 h-8 rounded-lg bg-[#C5A880]/10 flex items-center justify-center"><Edit3 size={14} className="text-[#C5A880]" /></button><button onClick={() => { if (confirm('Bu programı silmek istiyor musunuz?')) onDelete(item.id); }} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button></div></div>)}</div>}
-    </div>
-  );
+  return <div className="p-4"><AddButton label="Yeni Sohbet / Ders Ekle" onClick={() => setShowForm(true)} />{items.length === 0 ? <EmptyState text="Henüz sohbet/ders eklenmemiş." /> : <div className="space-y-3">{items.map((item: any) => <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3"><div className="w-14 h-14 rounded-lg bg-[#2D2A26] text-[#FAF6F0] flex flex-col items-center justify-center"><span className="text-[9px] text-[#C5A880]">{item.date}</span><span className="font-serif text-sm">{item.time}</span></div><div className="flex-1 min-w-0"><h3 className="font-serif text-sm truncate">{item.title}</h3><p className="text-xs text-[#2D2A26]/50 truncate">{item.description}</p><p className="text-[10px] text-[#2D2A26]/40">{item.speaker}</p></div><div className="flex flex-col gap-1.5"><button onClick={() => { if (confirm('Bu program için hatırlatma gönderilsin mi?')) onReminder(item); }} className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm">🔔</button><button onClick={() => setEditing(item)} className="w-8 h-8 rounded-lg bg-[#C5A880]/10 flex items-center justify-center"><Edit3 size={14} className="text-[#C5A880]" /></button><button onClick={() => { if (confirm('Bu programı silmek istiyor musunuz?')) onDelete(item.id); }} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button></div></div>)}</div>}</div>;
 }
 
 function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
@@ -236,18 +157,7 @@ function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
   const [speaker, setSpeaker] = useState(item?.speaker || '');
   const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return setError('Başlık zorunludur.');
-    if (!description.trim()) return setError('Açıklama zorunludur.');
-    if (!speaker.trim()) return setError('Konuşmacı zorunludur.');
-    const data = { id: item?.id || `sohbet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title, description, date, time, location, speaker, _sendPush: sendPush };
-    if (item) await onUpdate(item.id, data);
-    else await onAdd(data);
-    onClose();
-  };
-
+  const submit = async (e: FormEvent) => { e.preventDefault(); if (!title.trim()) return setError('Başlık zorunludur.'); if (!description.trim()) return setError('Açıklama zorunludur.'); if (!speaker.trim()) return setError('Konuşmacı zorunludur.'); const data = { id: item?.id || `sohbet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title, description, date, time, location, speaker, _sendPush: sendPush }; if (item) await onUpdate(item.id, data); else await onAdd(data); onClose(); };
   return <div className="p-4"><BackButton onClick={onClose} /><form onSubmit={submit} className="space-y-4"><h2 className="font-serif text-xl">{item ? 'Sohbet/Ders Düzenle' : 'Yeni Sohbet / Ders'}</h2><input className={inputClass} value={title} onChange={e => setTitle(e.target.value)} placeholder="Başlık" /><textarea className={`${inputClass} resize-none`} rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama" /><div className="grid grid-cols-2 gap-3"><input type="date" className={inputClass} value={date} onChange={e => setDate(e.target.value)} /><input type="time" className={inputClass} value={time} onChange={e => setTime(e.target.value)} /></div><input className={inputClass} value={location} onChange={e => setLocation(e.target.value)} placeholder="Konum" /><input className={inputClass} value={speaker} onChange={e => setSpeaker(e.target.value)} placeholder="Konuşmacı" /><label className="flex items-center gap-2 text-xs text-[#2D2A26]/70 bg-white rounded-lg border border-[#C5A880]/20 p-3"><input type="checkbox" checked={sendPush} onChange={e => setSendPush(e.target.checked)} />Bildirim Gönder</label>{error && <p className="text-sm text-red-600">{error}</p>}<SaveCancelButtons onCancel={onClose} /></form></div>;
 }
 
@@ -275,12 +185,16 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
   const [showPw, setShowPw] = useState(false);
   const [pwMsg, setPwMsg] = useState('');
   const isSuperadmin = isSuperAdminRole(currentAdmin?.role);
-  const change = (key: string, value: any) => setForm((prev: any) => ({ ...prev, [key]: value }));
 
+  useEffect(() => {
+    setForm(settings || {});
+  }, [settings]);
+
+  const change = (key: string, value: any) => setForm((prev: any) => ({ ...prev, [key]: value }));
   const submit = async (e: FormEvent) => { e.preventDefault(); await onUpdate(form); setSaved(true); setTimeout(() => setSaved(false), 2500); };
   const changePassword = async (e: FormEvent) => { e.preventDefault(); setPwMsg(''); if (!currentAdmin?.id) return setPwMsg('Admin bilgisi bulunamadı.'); if (newPassword.length < 6) return setPwMsg('Şifre en az 6 karakter olmalıdır.'); if (newPassword !== confirmPassword) return setPwMsg('Şifreler eşleşmiyor.'); await onUpdatePassword(currentAdmin.id, newPassword); setNewPassword(''); setConfirmPassword(''); setPwMsg('Şifre güncellendi.'); };
 
-  return <div className="p-4"><form onSubmit={submit} className="space-y-4"><h2 className="font-serif text-xl">Genel Ayarlar</h2><input className={inputClass} value={form.mosqueName || ''} onChange={e => change('mosqueName', e.target.value)} placeholder="Cami / Dernek Adı" /><input className={inputClass} value={form.shortName || ''} onChange={e => change('shortName', e.target.value)} placeholder="Kısa Başlık" /><input className={inputClass} value={form.vippsNumber || ''} onChange={e => change('vippsNumber', e.target.value)} placeholder="Vipps Numarası" /><input className={inputClass} value={form.whatsappNumber || ''} onChange={e => change('whatsappNumber', e.target.value)} placeholder="WhatsApp Numarası" /><textarea className={`${inputClass} resize-none`} rows={3} value={form.address || ''} onChange={e => change('address', e.target.value)} placeholder="Adres" /><input className={inputClass} value={form.mapUrl || ''} onChange={e => change('mapUrl', e.target.value)} placeholder="Google Harita URL" />{isSuperadmin && <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">🌙 Ramazan Modülü</h3><label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={form.ramadanEnabled || false} onChange={e => change('ramadanEnabled', e.target.checked)} />Ramazan Modu Aktif</label><input type="date" className={inputClass} value={form.ramadanStartDate || ''} onChange={e => change('ramadanStartDate', e.target.value)} /><input type="date" className={inputClass} value={form.ramadanEndDate || ''} onChange={e => change('ramadanEndDate', e.target.value)} /></div>}{isSuperadmin && <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.kurbanEnabled} onChange={e => change('kurbanEnabled', e.target.checked)} />Kurban Bayramı Aktif</label><input type="date" className={inputClass} value={form.kurbanStartDate || ''} onChange={e => { change('kurbanStartDate', e.target.value); change('kurbanEnabled', !!e.target.value); }} /></div>}{saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}<button type="submit" className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium flex items-center justify-center gap-2"><Save size={16} /> Ayarları Kaydet</button></form><form onSubmit={changePassword} className="mt-6 bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">Şifre Değiştir</h3><p className="text-xs text-[#2D2A26]/50">Bu işlem sadece oturum açmış Supabase Auth kullanıcısının şifresini değiştirir.</p><div className="relative"><input type={showPw ? 'text' : 'password'} className={`${inputClass} pr-12`} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Yeni şifre" /><button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPw ? <EyeOff size={18} /> : <Eye size={18} />}</button></div><input type={showPw ? 'text' : 'password'} className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Yeni şifre tekrar" />{pwMsg && <p className="text-sm text-[#2D2A26]/70">{pwMsg}</p>}<button type="submit" className="w-full py-3 rounded-lg bg-[#2D2A26] text-[#FAF6F0] font-medium">Şifreyi Güncelle</button></form></div>;
+  return <div className="p-4"><form onSubmit={submit} className="space-y-4"><h2 className="font-serif text-xl">Genel Ayarlar</h2><input className={inputClass} value={form.mosqueName || ''} onChange={e => change('mosqueName', e.target.value)} placeholder="Cami / Dernek Adı" /><input className={inputClass} value={form.shortName || ''} onChange={e => change('shortName', e.target.value)} placeholder="Kısa Başlık" /><div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">Vipps / Bağış</h3><input className={inputClass} value={form.vippsNumber || ''} onChange={e => change('vippsNumber', e.target.value)} placeholder="Vipps Numarası" /><label className="flex items-start gap-2 text-sm text-[#2D2A26]/80"><input type="checkbox" className="mt-1" checked={form.vippsButtonEnabled !== false} onChange={e => change('vippsButtonEnabled', e.target.checked)} /><span><span className="font-medium">Vipps uygulamasında aç butonu aktif</span><br /><span className="text-xs text-[#2D2A26]/50">Açık: Vipps butonu görünür. Kapalı: sadece numara ve kopyalama görünür.</span></span></label></div><input className={inputClass} value={form.whatsappNumber || ''} onChange={e => change('whatsappNumber', e.target.value)} placeholder="WhatsApp Numarası" /><textarea className={`${inputClass} resize-none`} rows={3} value={form.address || ''} onChange={e => change('address', e.target.value)} placeholder="Adres" /><input className={inputClass} value={form.mapUrl || ''} onChange={e => change('mapUrl', e.target.value)} placeholder="Google Harita URL" />{isSuperadmin && <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">🌙 Ramazan Modülü</h3><label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={form.ramadanEnabled || false} onChange={e => change('ramadanEnabled', e.target.checked)} />Ramazan Modu Aktif</label><input type="date" className={inputClass} value={form.ramadanStartDate || ''} onChange={e => change('ramadanStartDate', e.target.value)} /><input type="date" className={inputClass} value={form.ramadanEndDate || ''} onChange={e => change('ramadanEndDate', e.target.value)} /></div>}{isSuperadmin && <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.kurbanEnabled} onChange={e => change('kurbanEnabled', e.target.checked)} />Kurban Bayramı Aktif</label><input type="date" className={inputClass} value={form.kurbanStartDate || ''} onChange={e => { change('kurbanStartDate', e.target.value); change('kurbanEnabled', !!e.target.value); }} /></div>}{saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}<button type="submit" className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium flex items-center justify-center gap-2"><Save size={16} /> Ayarları Kaydet</button></form><form onSubmit={changePassword} className="mt-6 bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">Şifre Değiştir</h3><p className="text-xs text-[#2D2A26]/50">Bu işlem sadece oturum açmış Supabase Auth kullanıcısının şifresini değiştirir.</p><div className="relative"><input type={showPw ? 'text' : 'password'} className={`${inputClass} pr-12`} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Yeni şifre" /><button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPw ? <EyeOff size={18} /> : <Eye size={18} />}</button></div><input type={showPw ? 'text' : 'password'} className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Yeni şifre tekrar" />{pwMsg && <p className="text-sm text-[#2D2A26]/70">{pwMsg}</p>}<button type="submit" className="w-full py-3 rounded-lg bg-[#2D2A26] text-[#FAF6F0] font-medium">Şifreyi Güncelle</button></form></div>;
 }
 
 function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
@@ -292,68 +206,8 @@ function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
   const [role, setRole] = useState<'admin' | 'super_admin'>('admin');
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState('');
-
-  useEffect(() => {
-    setLocalAdmins(admins || []);
-  }, [admins]);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setMsg('');
-
-    if (!isSuperadmin) return setMsg('Sadece Süper Admin yönetici ekleyebilir.');
-    if (!email.trim() || !email.includes('@')) return setMsg('Geçerli e-posta zorunludur.');
-    if (!displayName.trim()) return setMsg('Görünen ad zorunludur.');
-    if (password.length < 6) return setMsg('Şifre en az 6 karakter olmalıdır.');
-    if (!supabase) return setMsg('Sistem bağlantısı yok.');
-
-    setCreating(true);
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
-      if (!token) {
-        setMsg('Oturum bulunamadı. Çıkış yapıp tekrar giriş yapın.');
-        return;
-      }
-
-      const res = await fetch('/api/create-admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-          displayName: displayName.trim(),
-          role,
-        }),
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        setMsg(result.error || 'Yönetici oluşturulamadı.');
-        return;
-      }
-
-      setLocalAdmins((prev) => [...prev, result.admin]);
-      setEmail('');
-      setDisplayName('');
-      setPassword('');
-      setRole('admin');
-      setShowForm(false);
-      setMsg('Yönetici oluşturuldu.');
-    } catch (err) {
-      console.error(err);
-      setMsg('Yönetici oluşturulurken hata oluştu.');
-    } finally {
-      setCreating(false);
-    }
-  };
-
+  useEffect(() => { setLocalAdmins(admins || []); }, [admins]);
+  const submit = async (e: FormEvent) => { e.preventDefault(); setMsg(''); if (!isSuperadmin) return setMsg('Sadece Süper Admin yönetici ekleyebilir.'); if (!email.trim() || !email.includes('@')) return setMsg('Geçerli e-posta zorunludur.'); if (!displayName.trim()) return setMsg('Görünen ad zorunludur.'); if (password.length < 6) return setMsg('Şifre en az 6 karakter olmalıdır.'); if (!supabase) return setMsg('Sistem bağlantısı yok.'); setCreating(true); try { const { data: sessionData } = await supabase.auth.getSession(); const token = sessionData.session?.access_token; if (!token) { setMsg('Oturum bulunamadı. Çıkış yapıp tekrar giriş yapın.'); return; } const res = await fetch('/api/create-admin', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ email: email.trim(), password, displayName: displayName.trim(), role }) }); const result = await res.json(); if (!res.ok) { setMsg(result.error || 'Yönetici oluşturulamadı.'); return; } setLocalAdmins((prev) => [...prev, result.admin]); setEmail(''); setDisplayName(''); setPassword(''); setRole('admin'); setShowForm(false); setMsg('Yönetici oluşturuldu.'); } catch (err) { console.error(err); setMsg('Yönetici oluşturulurken hata oluştu.'); } finally { setCreating(false); } };
   return <div className="p-4"><h2 className="font-serif text-xl mb-4">Yönetici Hesapları</h2>{!isSuperadmin && <p className="text-sm bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">Bu alan sadece Süper Admin tarafından yönetilebilir.</p>}{isSuperadmin && !showForm && <AddButton label="Yeni Yönetici Ekle" onClick={() => setShowForm(true)} />}{showForm && <form onSubmit={submit} className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-4 mb-4"><BackButton onClick={() => setShowForm(false)} /><p className="text-xs text-[#2D2A26]/50">E-posta, görünen ad, geçici şifre og rolle girin. Systemet oppretter Supabase Auth-bruker og adminprofil automatisk.</p><input type="email" className={inputClass} value={email} onChange={e => setEmail(e.target.value)} placeholder="E-posta" /><input className={inputClass} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Görünen ad" /><input type="password" className={inputClass} value={password} onChange={e => setPassword(e.target.value)} placeholder="Geçici şifre" /><select className={inputClass} value={role} onChange={e => setRole(e.target.value as 'admin' | 'super_admin')}><option value="admin">Admin</option><option value="super_admin">Super Admin</option></select><button type="submit" disabled={creating} className="w-full py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2"><Save size={16} /> {creating ? 'Oluşturuluyor...' : 'Kaydet'}</button></form>}{msg && <p className="text-sm mb-3 text-[#2D2A26]/70">{msg}</p>}{localAdmins?.length === 0 ? <EmptyState text="Henüz yönetici listesi yüklenmedi veya kayıt yok." /> : <div className="space-y-3">{localAdmins.map((admin: any) => <div key={admin.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-[#2D2A26] flex items-center justify-center text-white font-serif">{admin.display_name?.charAt(0) || admin.displayName?.charAt(0) || admin.username?.charAt(0)}</div><div className="flex-1"><h3 className="font-serif text-sm">{admin.display_name || admin.displayName || admin.username}</h3><p className="text-xs text-[#2D2A26]/50">@{admin.username}</p><span className="text-[9px] text-[#C5A880] uppercase">{admin.role}</span></div>{isSuperadmin && !isSuperAdminRole(admin.role) && <button onClick={() => { if (confirm('Bu yöneticiyi silmek istiyor musunuz?')) onDelete(admin.id); }} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button>}</div>)}</div>}</div>;
 }
 
