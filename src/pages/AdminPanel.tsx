@@ -194,7 +194,88 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
   const submit = async (e: FormEvent) => { e.preventDefault(); await onUpdate(form); setSaved(true); setTimeout(() => setSaved(false), 2500); };
   const changePassword = async (e: FormEvent) => { e.preventDefault(); setPwMsg(''); if (!currentAdmin?.id) return setPwMsg('Admin bilgisi bulunamadı.'); if (newPassword.length < 6) return setPwMsg('Şifre en az 6 karakter olmalıdır.'); if (newPassword !== confirmPassword) return setPwMsg('Şifreler eşleşmiyor.'); await onUpdatePassword(currentAdmin.id, newPassword); setNewPassword(''); setConfirmPassword(''); setPwMsg('Şifre güncellendi.'); };
 
-  return <div className="p-4"><form onSubmit={submit} className="space-y-4"><h2 className="font-serif text-xl">Genel Ayarlar</h2><input className={inputClass} value={form.mosqueName || ''} onChange={e => change('mosqueName', e.target.value)} placeholder="Cami / Dernek Adı" /><input className={inputClass} value={form.shortName || ''} onChange={e => change('shortName', e.target.value)} placeholder="Kısa Başlık" /><div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">Vipps / Bağış</h3><input className={inputClass} value={form.vippsNumber || ''} onChange={e => change('vippsNumber', e.target.value)} placeholder="Vipps Numarası" /><label className="flex items-start gap-2 text-sm text-[#2D2A26]/80"><input type="checkbox" className="mt-1" checked={form.vippsButtonEnabled !== false} onChange={e => change('vippsButtonEnabled', e.target.checked)} /><span><span className="font-medium">Vipps uygulamasında aç butonu aktif</span><br /><span className="text-xs text-[#2D2A26]/50">Açık: Vipps butonu görünür. Kapalı: sadece numara ve kopyalama görünür.</span></span></label></div><input className={inputClass} value={form.whatsappNumber || ''} onChange={e => change('whatsappNumber', e.target.value)} placeholder="WhatsApp Numarası" /><textarea className={`${inputClass} resize-none`} rows={3} value={form.address || ''} onChange={e => change('address', e.target.value)} placeholder="Adres" /><input className={inputClass} value={form.mapUrl || ''} onChange={e => change('mapUrl', e.target.value)} placeholder="Google Harita URL" />{isSuperadmin && <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">🌙 Ramazan Modülü</h3><label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={form.ramadanEnabled || false} onChange={e => change('ramadanEnabled', e.target.checked)} />Ramazan Modu Aktif</label><input type="date" className={inputClass} value={form.ramadanStartDate || ''} onChange={e => change('ramadanStartDate', e.target.value)} /><input type="date" className={inputClass} value={form.ramadanEndDate || ''} onChange={e => change('ramadanEndDate', e.target.value)} /></div>}{isSuperadmin && <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.kurbanEnabled} onChange={e => change('kurbanEnabled', e.target.checked)} />Kurban Bayramı Aktif</label><input type="date" className={inputClass} value={form.kurbanStartDate || ''} onChange={e => { change('kurbanStartDate', e.target.value); change('kurbanEnabled', !!e.target.value); }} /></div>}{saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}<button type="submit" className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium flex items-center justify-center gap-2"><Save size={16} /> Ayarları Kaydet</button></form><form onSubmit={changePassword} className="mt-6 bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3"><h3 className="font-serif text-lg">Şifre Değiştir</h3><p className="text-xs text-[#2D2A26]/50">Bu işlem sadece oturum açmış Supabase Auth kullanıcısının şifresini değiştirir.</p><div className="relative"><input type={showPw ? 'text' : 'password'} className={`${inputClass} pr-12`} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Yeni şifre" /><button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPw ? <EyeOff size={18} /> : <Eye size={18} />}</button></div><input type={showPw ? 'text' : 'password'} className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Yeni şifre tekrar" />{pwMsg && <p className="text-sm text-[#2D2A26]/70">{pwMsg}</p>}<button type="submit" className="w-full py-3 rounded-lg bg-[#2D2A26] text-[#FAF6F0] font-medium">Şifreyi Güncelle</button></form></div>;
+  return (
+    <div className="p-4">
+      <form onSubmit={submit} className="space-y-4">
+        <h2 className="font-serif text-xl">Genel Ayarlar</h2>
+        <input className={inputClass} value={form.mosqueName || ''} onChange={e => change('mosqueName', e.target.value)} placeholder="Cami / Dernek Adı" />
+        <input className={inputClass} value={form.shortName || ''} onChange={e => change('shortName', e.target.value)} placeholder="Kısa Başlık" />
+        
+        <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+          <h3 className="font-serif text-lg">Vipps / Bağış</h3>
+          <input 
+            className={inputClass} 
+            value={form.vippsNumber || ''} 
+            onChange={e => change('vippsNumber', e.target.value)} 
+            placeholder="Vipps Numarası" 
+          />
+          
+          {isSuperadmin && (
+            <>
+              <label className="block text-sm font-medium text-[#2D2A26]">
+                Vipps Donation URL
+              </label>
+              <input
+                className={inputClass}
+                value={form.vippsDonationUrl || ''}
+                onChange={e => change('vippsDonationUrl', e.target.value)}
+                placeholder="https://qr.vipps.no/..."
+              />
+              <p className="text-xs text-[#2D2A26]/60">
+                Lim inn Vipps Donation URL fra Vipps-portalen. Hvis feltet er tomt,
+                brukes vanlig Vipps-nummer.
+              </p>
+            </>
+          )}
+
+          <label className="flex items-start gap-2 text-sm text-[#2D2A26]/80">
+            <input type="checkbox" className="mt-1" checked={form.vippsButtonEnabled !== false} onChange={e => change('vippsButtonEnabled', e.target.checked)} />
+            <span>
+              <span className="font-medium">Vipps uygulamasında aç butonu aktif</span>
+              <br />
+              <span className="text-xs text-[#2D2A26]/50">Açık: Vipps butonu görünür. Kapalı: sadece numara ve kopyalama görünür.</span>
+            </span>
+          </label>
+        </div>
+
+        <input className={inputClass} value={form.whatsappNumber || ''} onChange={e => change('whatsappNumber', e.target.value)} placeholder="WhatsApp Numarası" />
+        <textarea className={`${inputClass} resize-none`} rows={3} value={form.address || ''} onChange={e => change('address', e.target.value)} placeholder="Adres" />
+        <input className={inputClass} value={form.mapUrl || ''} onChange={e => change('mapUrl', e.target.value)} placeholder="Google Harita URL" />
+        
+        {isSuperadmin && (
+          <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+            <h3 className="font-serif text-lg">🌙 Ramazan Modülü</h3>
+            <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={form.ramadanEnabled || false} onChange={e => change('ramadanEnabled', e.target.checked)} />Ramazan Modu Aktif</label>
+            <input type="date" className={inputClass} value={form.ramadanStartDate || ''} onChange={e => change('ramadanStartDate', e.target.value)} />
+            <input type="date" className={inputClass} value={form.ramadanEndDate || ''} onChange={e => change('ramadanEndDate', e.target.value)} />
+          </div>
+        )}
+        
+        {isSuperadmin && (
+          <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+            <h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.kurbanEnabled} onChange={e => change('kurbanEnabled', e.target.checked)} />Kurban Bayramı Aktif</label>
+            <input type="date" className={inputClass} value={form.kurbanStartDate || ''} onChange={e => { change('kurbanStartDate', e.target.value); change('kurbanEnabled', !!e.target.value); }} />
+          </div>
+        )}
+        
+        {saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}
+        <button type="submit" className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium flex items-center justify-center gap-2"><Save size={16} /> Ayarları Kaydet</button>
+      </form>
+
+      <form onSubmit={changePassword} className="mt-6 bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+        <h3 className="font-serif text-lg">Şifre Değiştir</h3>
+        <p className="text-xs text-[#2D2A26]/50">Bu işlem sadece oturum açmış Supabase Auth kullanıcısının şifresini değiştirir.</p>
+        <div className="relative">
+          <input type={showPw ? 'text' : 'password'} className={`${inputClass} pr-12`} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Yeni şifre" />
+          <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPw ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+        </div>
+        <input type={showPw ? 'text' : 'password'} className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Yeni şifre tekrar" />
+        {pwMsg && <p className="text-sm text-[#2D2A26]/70">{pwMsg}</p>}
+        <button type="submit" className="w-full py-3 rounded-lg bg-[#2D2A26] text-[#FAF6F0] font-medium">Şifreyi Güncelle</button>
+      </form>
+    </div>
+  );
 }
 
 function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
