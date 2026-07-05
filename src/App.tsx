@@ -19,6 +19,21 @@ type PushMessage = {
   expires_at: string;
 };
 
+function safeColor(value: unknown, fallback: string) {
+  const color = String(value || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
+}
+
+function contrastText(hex: string) {
+  const value = hex.replace('#', '');
+  const n = parseInt(value, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.58 ? '#2D2A26' : '#FFFFFF';
+}
+
 function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [first, setFirst] = useState('');
   const [second, setSecond] = useState('');
@@ -57,7 +72,7 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
   return (
     <div className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-4">
-      <div className="bg-[#FAF6F0] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+      <div className="bg-[var(--brand-background)] w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ color: 'var(--brand-text)' }}>
         <div className="flex justify-between mb-5">
           <h2 className="font-serif text-xl">Yeni Şifre Belirle</h2>
           <button onClick={onClose} className="text-xl leading-none">×</button>
@@ -70,12 +85,12 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
           <input type={visible ? 'text' : 'password'} className="w-full p-3 border rounded-xl" placeholder="Yeni şifre" value={first} onChange={(e) => setFirst(e.target.value)} required />
           <input type={visible ? 'text' : 'password'} className="w-full p-3 border rounded-xl" placeholder="Yeni şifre tekrar" value={second} onChange={(e) => setSecond(e.target.value)} required />
 
-          <label className="flex items-center gap-2 text-xs text-[#2D2A26]/60">
+          <label className="flex items-center gap-2 text-xs opacity-70">
             <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} />
             Şifreyi göster
           </label>
 
-          <button type="submit" disabled={busy} className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium">
+          <button type="submit" disabled={busy} className="w-full p-3 rounded-xl font-medium" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}>
             {busy ? 'Kaydediliyor...' : 'Kaydet'}
           </button>
         </form>
@@ -85,7 +100,7 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 function AppContent() {
-  const { isAdmin, isInitialized } = useApp();
+  const { isAdmin, isInitialized, settings } = useApp();
   const [page, setPage] = useState<Page>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
@@ -95,6 +110,19 @@ function AppContent() {
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
+
+  const brandPrimary = safeColor(settings?.brandingPrimaryColor, '#C5A880');
+  const brandSecondary = safeColor(settings?.brandingSecondaryColor, '#2D2A26');
+  const brandBackground = safeColor(settings?.brandingBackgroundColor, '#FAF6F0');
+  const brandText = safeColor(settings?.brandingTextColor, '#2D2A26');
+  const brandVars = {
+    '--brand-primary': brandPrimary,
+    '--brand-secondary': brandSecondary,
+    '--brand-background': brandBackground,
+    '--brand-text': brandText,
+    '--brand-primary-text': contrastText(brandPrimary),
+    '--brand-secondary-text': contrastText(brandSecondary),
+  } as React.CSSProperties;
 
   useEffect(() => {
     if (isInitialized && isAdmin) {
@@ -171,17 +199,17 @@ function AppContent() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-[#FAF6F0] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: brandBackground, color: brandText }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-[#C5A880] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs text-[#2D2A26]/40 font-medium">Yükleniyor...</p>
+          <div className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: brandPrimary, borderTopColor: 'transparent' }}></div>
+          <p className="text-xs opacity-50 font-medium">Yükleniyor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF6F0]">
+    <div className="min-h-screen" style={{ ...brandVars, backgroundColor: 'var(--brand-background)', color: 'var(--brand-text)' }}>
       {page === 'home' && <HomePage />}
       {page === 'contact' && <ContactPage />}
 
@@ -223,23 +251,24 @@ function AppContent() {
 
       {pushMessage && (
         <div className="fixed inset-0 z-[100] bg-black/45 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-5 w-full max-w-sm border-2 border-[#C5A880]/25 shadow-xl">
-            <div className="w-12 h-12 rounded-full bg-[#C5A880]/15 flex items-center justify-center mb-3">
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm border-2 shadow-xl" style={{ borderColor: `${brandPrimary}40` }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandPrimary}26` }}>
               <span className="text-xl">🔔</span>
             </div>
 
-            <h2 className="font-serif text-xl text-[#2D2A26] mb-2">
+            <h2 className="font-serif text-xl mb-2" style={{ color: brandText }}>
               {pushMessage.title}
             </h2>
 
-            <p className="text-sm text-[#2D2A26]/70 whitespace-pre-wrap mb-5">
+            <p className="text-sm opacity-70 whitespace-pre-wrap mb-5" style={{ color: brandText }}>
               {pushMessage.body}
             </p>
 
             <button
               type="button"
               onClick={() => setPushMessage(null)}
-              className="w-full py-3 rounded-xl bg-[#C5A880] text-white text-sm font-medium"
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{ backgroundColor: brandPrimary, color: contrastText(brandPrimary) }}
             >
               Kapat
             </button>
@@ -257,4 +286,3 @@ export default function App() {
     </AppProvider>
   );
 }
-
