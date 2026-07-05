@@ -22,7 +22,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
     addNews, updateNews, deleteNews,
     addStaff, updateStaff, deleteStaff,
     addSohbet, updateSohbet, deleteSohbet, sendSohbetReminder,
-    updateSettings, addAdmin, deleteAdmin, updateAdminPassword
+    updateSettings, deleteAdmin, updateAdminPassword
   } = useApp();
 
   const [tab, setTab] = useState<AdminTab>('news');
@@ -289,6 +289,7 @@ function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'admin' | 'super_admin'>('admin');
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -327,7 +328,7 @@ function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
           email: email.trim(),
           password,
           displayName: displayName.trim(),
-          role: 'admin',
+          role,
         }),
       });
 
@@ -342,6 +343,7 @@ function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
       setEmail('');
       setDisplayName('');
       setPassword('');
+      setRole('admin');
       setShowForm(false);
       setMsg('Yönetici oluşturuldu.');
     } catch (err) {
@@ -352,7 +354,7 @@ function AdminsManager({ admins, onDelete, isSuperadmin }: any) {
     }
   };
 
-  return <div className="p-4"><h2 className="font-serif text-xl mb-4">Yönetici Hesapları</h2>{!isSuperadmin && <p className="text-sm bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">Bu alan sadece Süper Admin tarafından yönetilebilir.</p>}{isSuperadmin && !showForm && <AddButton label="Yeni Yönetici Ekle" onClick={() => setShowForm(true)} />}{showForm && <form onSubmit={submit} className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-4 mb-4"><BackButton onClick={() => setShowForm(false)} /><p className="text-xs text-[#2D2A26]/50">E-posta, görünen ad ve geçici şifre girin. Sistem Supabase Auth kullanıcısını ve admin profilini otomatik oluşturur.</p><input type="email" className={inputClass} value={email} onChange={e => setEmail(e.target.value)} placeholder="E-posta" /><input className={inputClass} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Görünen ad" /><input type="password" className={inputClass} value={password} onChange={e => setPassword(e.target.value)} placeholder="Geçici şifre" /><button type="submit" disabled={creating} className="w-full py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2"><Save size={16} /> {creating ? 'Oluşturuluyor...' : 'Kaydet'}</button></form>}{msg && <p className="text-sm mb-3 text-[#2D2A26]/70">{msg}</p>}{localAdmins?.length === 0 ? <EmptyState text="Henüz yönetici listesi yüklenmedi veya kayıt yok." /> : <div className="space-y-3">{localAdmins.map((admin: any) => <div key={admin.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-[#2D2A26] flex items-center justify-center text-white font-serif">{admin.display_name?.charAt(0) || admin.displayName?.charAt(0) || admin.username?.charAt(0)}</div><div className="flex-1"><h3 className="font-serif text-sm">{admin.display_name || admin.displayName || admin.username}</h3><p className="text-xs text-[#2D2A26]/50">@{admin.username}</p><span className="text-[9px] text-[#C5A880] uppercase">{admin.role}</span></div>{isSuperadmin && !isSuperAdminRole(admin.role) && <button onClick={() => { if (confirm('Bu yöneticiyi silmek istiyor musunuz?')) onDelete(admin.id); }} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button>}</div>)}</div>}</div>;
+  return <div className="p-4"><h2 className="font-serif text-xl mb-4">Yönetici Hesapları</h2>{!isSuperadmin && <p className="text-sm bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">Bu alan sadece Süper Admin tarafından yönetilebilir.</p>}{isSuperadmin && !showForm && <AddButton label="Yeni Yönetici Ekle" onClick={() => setShowForm(true)} />}{showForm && <form onSubmit={submit} className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-4 mb-4"><BackButton onClick={() => setShowForm(false)} /><p className="text-xs text-[#2D2A26]/50">E-posta, görünen ad, geçici şifre og rolle girin. Systemet oppretter Supabase Auth-bruker og adminprofil automatisk.</p><input type="email" className={inputClass} value={email} onChange={e => setEmail(e.target.value)} placeholder="E-posta" /><input className={inputClass} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Görünen ad" /><input type="password" className={inputClass} value={password} onChange={e => setPassword(e.target.value)} placeholder="Geçici şifre" /><select className={inputClass} value={role} onChange={e => setRole(e.target.value as 'admin' | 'super_admin')}><option value="admin">Admin</option><option value="super_admin">Super Admin</option></select><button type="submit" disabled={creating} className="w-full py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2"><Save size={16} /> {creating ? 'Oluşturuluyor...' : 'Kaydet'}</button></form>}{msg && <p className="text-sm mb-3 text-[#2D2A26]/70">{msg}</p>}{localAdmins?.length === 0 ? <EmptyState text="Henüz yönetici listesi yüklenmedi veya kayıt yok." /> : <div className="space-y-3">{localAdmins.map((admin: any) => <div key={admin.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex items-center gap-3"><div className="w-11 h-11 rounded-full bg-[#2D2A26] flex items-center justify-center text-white font-serif">{admin.display_name?.charAt(0) || admin.displayName?.charAt(0) || admin.username?.charAt(0)}</div><div className="flex-1"><h3 className="font-serif text-sm">{admin.display_name || admin.displayName || admin.username}</h3><p className="text-xs text-[#2D2A26]/50">@{admin.username}</p><span className="text-[9px] text-[#C5A880] uppercase">{admin.role}</span></div>{isSuperadmin && !isSuperAdminRole(admin.role) && <button onClick={() => { if (confirm('Bu yöneticiyi silmek istiyor musunuz?')) onDelete(admin.id); }} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button>}</div>)}</div>}</div>;
 }
 
 function PushManager() {
