@@ -11,98 +11,32 @@ export function ForgotPasswordModal({
   onClose: () => void;
   initialUsername?: string;
 }) {
-  const [step, setStep] = useState<'username' | 'question' | 'done'>('username');
-  const [username, setUsername] = useState('');
-  const [admin, setAdmin] = useState<any | null>(null);
-  const [answer, setAnswer] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const lookupAdmin = async (name: string) => {
-    setError('');
-
-    const cleanUsername = name.trim();
-
-    if (!cleanUsername) {
-      setStep('username');
-      return;
-    }
-
-    const client = supabase;
-    if (!client) {
-      setError('Sistem bağlantısı yok.');
-      return;
-    }
-
-    setLoading(true);
-
-    const { data, error } = await client
-      .from('admins')
-      .select('id, username, security_question, security_answer')
-      .eq('username', cleanUsername)
-      .maybeSingle();
-
-    setLoading(false);
-
-    if (error || !data) {
-      setStep('username');
-      return setError('Kullanıcı bulunamadı.');
-    }
-
-    if (!data.security_question || !data.security_answer) {
-      setStep('username');
-      return setError('Güvenlik sorusu tanımlı değil.');
-    }
-
-    setUsername(cleanUsername);
-    setAdmin(data);
-    setStep('question');
-  };
-
   useEffect(() => {
     if (open) {
-      setStep('username');
-      setUsername(initialUsername || '');
-      setAdmin(null);
-      setAnswer('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setEmail(initialUsername || '');
+      setMessage('');
       setError('');
-
-      if (initialUsername?.trim()) {
-        lookupAdmin(initialUsername);
-      }
+      setLoading(false);
     }
   }, [open, initialUsername]);
 
   if (!open) return null;
 
-  const findAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await lookupAdmin(username);
-  };
-
-  const resetPassword = async (e: React.FormEvent) => {
+  const sendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
 
-    if (!admin) return setError('Kullanıcı bilgisi bulunamadı.');
+    const cleanEmail = email.trim();
 
-    if (
-      answer.trim().toLowerCase() !==
-      String(admin.security_answer).trim().toLowerCase()
-    ) {
-      return setError('Cevap hatalı.');
-    }
-
-    if (newPassword.length < 6) {
-      return setError('Yeni şifre en az 6 karakter olmalıdır.');
-    }
-
-    if (newPassword !== confirmPassword) {
-      return setError('Şifreler eşleşmiyor.');
+    if (!cleanEmail) {
+      setError('E-posta zorunludur.');
+      return;
     }
 
     const client = supabase;
@@ -113,19 +47,18 @@ export function ForgotPasswordModal({
 
     setLoading(true);
 
-    const { error } = await client
-      .from('admins')
-      .update({ password: newPassword })
-      .eq('id', admin.id);
+    const { error } = await client.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: window.location.origin,
+    });
 
     setLoading(false);
 
     if (error) {
-      setError('Hata: ' + error.message);
+      setError('Sıfırlama e-postası gönderilemedi: ' + error.message);
       return;
     }
 
-    setStep('done');
+    setMessage('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.');
   };
 
   return (
@@ -138,76 +71,31 @@ export function ForgotPasswordModal({
           </button>
         </div>
 
-        {loading && <p className="text-xs text-[#2D2A26]/50 mb-3">Yükleniyor...</p>}
+        <p className="text-xs text-[#2D2A26]/60 mb-4">
+          E-posta adresinizi girin. Supabase Auth size güvenli bir şifre sıfırlama bağlantısı gönderecek.
+        </p>
+
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+        {message && <p className="text-green-700 text-xs mb-3">{message}</p>}
 
-        {step === 'username' && (
-          <form onSubmit={findAdmin} className="space-y-4">
-            <input
-              className="w-full p-3 border rounded-xl"
-              placeholder="Kullanıcı Adı"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+        <form onSubmit={sendResetEmail} className="space-y-4">
+          <input
+            type="email"
+            className="w-full p-3 border rounded-xl"
+            placeholder="E-posta"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-            <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium">
-              {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Devam Et'}
-            </button>
-          </form>
-        )}
-
-        {step === 'question' && (
-          <form onSubmit={resetPassword} className="space-y-4">
-            <p className="text-sm font-medium bg-white p-3 rounded-lg border">
-              {admin?.security_question}
-            </p>
-
-            <input
-              className="w-full p-3 border rounded-xl"
-              placeholder="Cevap"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              className="w-full p-3 border rounded-xl"
-              placeholder="Yeni Şifre"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              className="w-full p-3 border rounded-xl"
-              placeholder="Tekrar"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-
-            <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl">
-              {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Güncelle'}
-            </button>
-          </form>
-        )}
-
-        {step === 'done' && (
-          <div className="space-y-4">
-            <p className="text-sm text-green-700">
-              Şifreniz güncellendi. Giriş yapabilirsiniz.
-            </p>
-            <button
-              onClick={onClose}
-              className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium"
-            >
-              Girişe Dön
-            </button>
-          </div>
-        )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium"
+          >
+            {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Sıfırlama E-postası Gönder'}
+          </button>
+        </form>
       </div>
     </div>
   );
