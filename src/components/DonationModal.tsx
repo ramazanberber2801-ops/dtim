@@ -13,6 +13,7 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
   const [copied, setCopied] = useState(false);
   const [openingVipps, setOpeningVipps] = useState(false);
   const vippsNumber = settings?.vippsNumber || '29816';
+  const vippsButtonEnabled = settings?.vippsButtonEnabled !== false;
 
   if (!open) return null;
 
@@ -103,15 +104,23 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={openVipps}
-            disabled={openingVipps}
-            className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
-          >
-            {openingVipps ? <Loader2 size={18} className="animate-spin" /> : <ExternalLink size={18} />}
-            {openingVipps ? 'Vipps Açılıyor...' : 'Vipps Uygulamasında Aç'}
-          </button>
+          {vippsButtonEnabled && (
+            <button
+              type="button"
+              onClick={openVipps}
+              disabled={openingVipps}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
+            >
+              {openingVipps ? <Loader2 size={18} className="animate-spin" /> : <ExternalLink size={18} />}
+              {openingVipps ? 'Vipps Açılıyor...' : 'Vipps Uygulamasında Aç'}
+            </button>
+          )}
+
+          {!vippsButtonEnabled && (
+            <p className="mt-4 text-center text-xs text-[#2D2A26]/50">
+              Vipps uygulaması bağlantısı kapalı. Bağış için numarayı kopyalayabilirsiniz.
+            </p>
+          )}
 
           <div className="flex items-start gap-2 text-xs text-[#2D2A26]/50 bg-[#C5A880]/5 rounded-lg p-3 mt-4">
             <Sparkles size={14} className="text-[#C5A880] shrink-0 mt-0.5" />
