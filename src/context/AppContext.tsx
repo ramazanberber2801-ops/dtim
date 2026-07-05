@@ -67,7 +67,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [news, setNews] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [sohbet, setSohbet] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>({ vippsNumber: '29816' });
+  const [settings, setSettings] = useState<any>({ vippsNumber: '29816', vippsButtonEnabled: true });
   const [inspiration, setInspiration] = useState<any>({});
   const [admins, setAdmins] = useState<any[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<any | null>(savedAdmin);
@@ -80,6 +80,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     mosqueName: row.mosque_name || '',
     shortName: row.short_name || '',
     vippsNumber: row.vipps_number || '',
+    vippsButtonEnabled: row.vipps_button_enabled !== false,
     address: row.address || '',
     mapUrl: row.map_url || '',
     phone: row.phone || '',
@@ -97,6 +98,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     mosque_name: s.mosqueName || '',
     short_name: s.shortName || '',
     vipps_number: s.vippsNumber || '',
+    vipps_button_enabled: s.vippsButtonEnabled !== false,
     address: s.address || '',
     map_url: s.mapUrl || '',
     phone: s.phone || '',
