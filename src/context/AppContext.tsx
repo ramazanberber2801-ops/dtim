@@ -67,7 +67,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [news, setNews] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [sohbet, setSohbet] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>({ vippsNumber: '29816', vippsButtonEnabled: true });
+  const [settings, setSettings] = useState<any>({ vippsNumber: '29816', vippsButtonEnabled: true, vippsDonationUrl: '' });
   const [inspiration, setInspiration] = useState<any>({});
   const [admins, setAdmins] = useState<any[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<any | null>(savedAdmin);
@@ -81,6 +81,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     shortName: row.short_name || '',
     vippsNumber: row.vipps_number || '',
     vippsButtonEnabled: row.vipps_button_enabled !== false,
+    vippsDonationUrl: row.vipps_donation_url || '',
     address: row.address || '',
     mapUrl: row.map_url || '',
     phone: row.phone || '',
@@ -99,6 +100,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     short_name: s.shortName || '',
     vipps_number: s.vippsNumber || '',
     vipps_button_enabled: s.vippsButtonEnabled !== false,
+    vipps_donation_url: s.vippsDonationUrl || null,
     address: s.address || '',
     map_url: s.mapUrl || '',
     phone: s.phone || '',
