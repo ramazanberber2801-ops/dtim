@@ -2,14 +2,14 @@ import { useState, useEffect, useRef, type FormEvent } from 'react';
 import {
   X, Newspaper, Users, LogOut, Trash2, Edit3, Plus,
   Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon,
-  UserCog, Check, Eye, EyeOff, Bell, BarChart3
+  UserCog, Check, Eye, EyeOff, Bell, BarChart3, Palette
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fileToOptimizedBase64 } from '../lib/imageUtils';
 import { supabase } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
 
-type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'admins' | 'push' | 'stats';
+type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'branding' | 'admins' | 'push' | 'stats';
 
 const inputClass =
   'w-full px-4 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880]';
@@ -41,6 +41,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
     { id: 'sohbet' as AdminTab, label: 'Sohbet/Ders', icon: Mic },
     { id: 'staff' as AdminTab, label: 'Yönetim', icon: Users },
     { id: 'settings' as AdminTab, label: 'Ayarlar', icon: SettingsIcon },
+    ...(isSuperadmin ? [{ id: 'branding' as AdminTab, label: 'Branding', icon: Palette }] : []),
     { id: 'admins' as AdminTab, label: 'Yöneticiler', icon: UserCog },
     { id: 'push' as AdminTab, label: 'Bildirim', icon: Bell },
     { id: 'stats' as AdminTab, label: 'İstatistik', icon: BarChart3 },
@@ -93,6 +94,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
         {tab === 'sohbet' && <SohbetManager items={sohbet} onAdd={addSohbet} onUpdate={updateSohbet} onDelete={deleteSohbet} onReminder={sendSohbetReminder} />}
         {tab === 'staff' && <StaffManager items={staff} onAdd={addStaff} onUpdate={updateStaff} onDelete={deleteStaff} />}
         {tab === 'settings' && <SettingsManager settings={settings} onUpdate={updateSettings} currentAdmin={currentAdmin} onUpdatePassword={updateAdminPassword} />}
+        {tab === 'branding' && isSuperadmin && <BrandingManager settings={settings} onUpdate={updateSettings} />}
         {tab === 'admins' && <AdminsManager admins={admins} onDelete={deleteAdmin} isSuperadmin={isSuperadmin} />}
         {tab === 'push' && <PushManager />}
         {tab === 'stats' && <StatsManager />}
@@ -175,6 +177,134 @@ function StaffForm({ item, onAdd, onUpdate, onClose }: any) {
   const [error, setError] = useState('');
   const submit = async (e: FormEvent) => { e.preventDefault(); if (!name.trim()) return setError('İsim zorunludur.'); if (!position.trim()) return setError('Görev zorunludur.'); const data = { name, position, phone }; if (item) await onUpdate(item.id, data); else await onAdd(data); onClose(); };
   return <div className="p-4"><BackButton onClick={onClose} /><form onSubmit={submit} className="space-y-4"><h2 className="font-serif text-xl">{item ? 'Yönetim Üyesini Düzenle' : 'Yeni Yönetim Üyesi'}</h2><input className={inputClass} value={name} onChange={e => setName(e.target.value)} placeholder="Ad Soyad" /><input className={inputClass} value={position} onChange={e => setPosition(e.target.value)} placeholder="Başkan, Sekreter, Muhasip..." /><input className={inputClass} value={phone} onChange={e => setPhone(e.target.value)} placeholder="Telefon opsiyonel" />{error && <p className="text-sm text-red-600">{error}</p>}<SaveCancelButtons onCancel={onClose} /></form></div>;
+}
+
+function hexToRgb(hex: string) {
+  const normalized = hex.replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return { r: 0, g: 0, b: 0 };
+  const value = parseInt(normalized, 16);
+  return { r: (value >> 16) & 255, g: (value >> 8) & 255, b: value & 255 };
+}
+
+function contrastText(hex: string) {
+  const { r, g, b } = hexToRgb(hex);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.58 ? '#2D2A26' : '#FFFFFF';
+}
+
+function contrastRatio(bg: string, fg: string) {
+  const luminance = (hex: string) => {
+    const { r, g, b } = hexToRgb(hex);
+    const parts = [r, g, b].map((v) => {
+      const s = v / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2];
+  };
+  const l1 = luminance(bg);
+  const l2 = luminance(fg);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs font-medium text-[#2D2A26]/70">{label}</span>
+      <div className="flex gap-2">
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-12 h-10 rounded-lg border border-[#C5A880]/20 bg-white" />
+        <input className={inputClass} value={value} onChange={(e) => onChange(e.target.value)} placeholder="#C5A880" />
+      </div>
+    </label>
+  );
+}
+
+function BrandingManager({ settings, onUpdate }: any) {
+  const defaults = {
+    brandingPrimaryColor: '#C5A880',
+    brandingSecondaryColor: '#2D2A26',
+    brandingBackgroundColor: '#FAF6F0',
+    brandingTextColor: '#2D2A26',
+  };
+  const [form, setForm] = useState<any>({ ...defaults, ...(settings || {}) });
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setForm({ ...defaults, ...(settings || {}) });
+  }, [settings]);
+
+  const change = (key: string, value: string) => setForm((prev: any) => ({ ...prev, [key]: value }));
+  const primaryText = contrastText(form.brandingPrimaryColor);
+  const secondaryText = contrastText(form.brandingSecondaryColor);
+  const bgRatio = contrastRatio(form.brandingBackgroundColor, form.brandingTextColor);
+  const bgOk = bgRatio >= 4.5;
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    await onUpdate(form);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const resetDefaults = () => {
+    setForm((prev: any) => ({ ...prev, ...defaults }));
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <div>
+        <h2 className="font-serif text-xl">Branding Studio</h2>
+        <p className="text-xs text-[#2D2A26]/50 mt-1">Farger kan testes her. Logo og app-ikon kommer i neste fase.</p>
+      </div>
+
+      <form onSubmit={submit} className="space-y-4">
+        <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+          <h3 className="font-serif text-lg">🎨 Farger</h3>
+          <ColorField label="Primærfarge" value={form.brandingPrimaryColor} onChange={(v) => change('brandingPrimaryColor', v)} />
+          <ColorField label="Sekundærfarge" value={form.brandingSecondaryColor} onChange={(v) => change('brandingSecondaryColor', v)} />
+          <ColorField label="Bakgrunnsfarge" value={form.brandingBackgroundColor} onChange={(v) => change('brandingBackgroundColor', v)} />
+          <ColorField label="Tekstfarge" value={form.brandingTextColor} onChange={(v) => change('brandingTextColor', v)} />
+        </div>
+
+        <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+          <h3 className="font-serif text-lg">🤖 Automatisk kontrast</h3>
+          <p className="text-xs text-[#2D2A26]/60">Primærfarge bruker automatisk <b>{primaryText === '#FFFFFF' ? 'lys tekst' : 'mørk tekst'}</b>.</p>
+          <p className="text-xs text-[#2D2A26]/60">Sekundærfarge bruker automatisk <b>{secondaryText === '#FFFFFF' ? 'lys tekst' : 'mørk tekst'}</b>.</p>
+          <p className={`text-xs ${bgOk ? 'text-green-700' : 'text-red-600'}`}>
+            Bakgrunn + tekst kontrast: {bgRatio.toFixed(1)}:1 {bgOk ? '✓ Godkjent' : '⚠ Kan være vanskelig å lese'}
+          </p>
+        </div>
+
+        <div className="rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-4" style={{ backgroundColor: form.brandingBackgroundColor, color: form.brandingTextColor }}>
+          <h3 className="font-serif text-lg">👀 Forhåndsvisning</h3>
+          <div className="rounded-xl overflow-hidden border border-black/10 bg-white/80">
+            <div className="p-4" style={{ backgroundColor: form.brandingSecondaryColor, color: secondaryText }}>
+              <p className="font-serif text-lg">{form.mosqueName || 'Foreningsnavn'}</p>
+              <p className="text-xs opacity-80">Mobilapp forhåndsvisning</p>
+            </div>
+            <div className="p-4 space-y-3" style={{ backgroundColor: form.brandingBackgroundColor, color: form.brandingTextColor }}>
+              <div className="rounded-xl p-3 bg-white shadow-sm">
+                <p className="text-[10px] uppercase" style={{ color: form.brandingPrimaryColor }}>Duyuru</p>
+                <p className="font-serif text-base">Nyhetskort</p>
+                <p className="text-xs opacity-70">Slik kan tekst og kort se ut i appen.</p>
+              </div>
+              <button type="button" className="w-full py-3 rounded-xl font-medium" style={{ backgroundColor: form.brandingPrimaryColor, color: primaryText }}>
+                Primær knapp
+              </button>
+              <button type="button" className="w-full py-3 rounded-xl font-medium" style={{ backgroundColor: form.brandingSecondaryColor, color: secondaryText }}>
+                Sekundær knapp
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Branding kaydedildi.</p>}
+        <div className="flex gap-3">
+          <button type="button" onClick={resetDefaults} className="flex-1 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-sm">Standarda dön</button>
+          <button type="submit" className="flex-1 py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2"><Save size={16} /> Kaydet</button>
+        </div>
+      </form>
+    </div>
+  );
 }
 
 function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }: any) {
