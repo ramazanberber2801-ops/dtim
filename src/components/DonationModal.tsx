@@ -8,12 +8,18 @@ interface DonationModalProps {
   onClose: () => void;
 }
 
+function cleanVippsDonationUrl(value: unknown) {
+  const url = String(value || '').trim();
+  return url.startsWith('https://') ? url : '';
+}
+
 export function DonationModal({ open, onClose }: DonationModalProps) {
   const { settings } = useApp();
   const [copied, setCopied] = useState(false);
   const [openingVipps, setOpeningVipps] = useState(false);
   const vippsNumber = settings?.vippsNumber || '29816';
   const vippsButtonEnabled = settings?.vippsButtonEnabled !== false;
+  const vippsDonationUrl = cleanVippsDonationUrl(settings?.vippsDonationUrl);
 
   if (!open) return null;
 
@@ -29,6 +35,12 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     setOpeningVipps(true);
 
     try {
+      if (vippsDonationUrl) {
+        await trackEvent('donation_click', vippsNumber, 'Vipps donation URL');
+        window.location.href = vippsDonationUrl;
+        return;
+      }
+
       const res = await fetch('/api/vipps-donation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
