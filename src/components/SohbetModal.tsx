@@ -20,10 +20,10 @@ const mix = (color: string, amount: number, fallback = 'transparent') =>
 
 function escapeIcsText(value: string | undefined) {
   return String(value || '')
-    .replace(/\/g, '\\')
-    .replace(/\n/g, '\n')
-    .replace(/,/g, '\,')
-    .replace(/;/g, '\;');
+    .split('\\').join('\\\\')
+    .split('\n').join('\\n')
+    .split(',').join('\\,')
+    .split(';').join('\\;');
 }
 
 function toIcsDate(date: string, time: string, addMinutes = 0) {
