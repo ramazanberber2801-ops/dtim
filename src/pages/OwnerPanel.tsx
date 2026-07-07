@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import {
   Building2,
   Boxes,
@@ -26,15 +27,15 @@ const brand = {
 const mix = (color: string, amount: number, fallback = 'transparent') =>
   `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
-const modules = [
-  { name: 'Nyheter', type: 'Core', status: 'Inkludert' },
-  { name: 'Arrangementer', type: 'Core', status: 'Inkludert' },
-  { name: 'Kontakt', type: 'Core', status: 'Inkludert' },
-  { name: 'Donasjon', type: 'Tillegg', status: 'Valgfri' },
-  { name: 'Push-varsler', type: 'Tillegg', status: 'Valgfri' },
-  { name: 'Bønnetider', type: 'Religiøs', status: 'Valgfri' },
-  { name: 'Ayet / Hadis', type: 'Religiøs', status: 'Valgfri' },
-  { name: 'Admin Chat', type: 'Premium', status: 'Planlagt' },
+const defaultModules = [
+  { id: 'news', name: 'Nyheter', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
+  { id: 'events', name: 'Arrangementer', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
+  { id: 'contact', name: 'Kontakt', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
+  { id: 'donation', name: 'Donasjon', type: 'Tillegg', status: 'Aktiv', enabled: true, locked: false },
+  { id: 'push', name: 'Push-varsler', type: 'Tillegg', status: 'Aktiv', enabled: true, locked: false },
+  { id: 'prayer', name: 'Bønnetider', type: 'Religiøs', status: 'Av', enabled: false, locked: false },
+  { id: 'ayet-hadis', name: 'Ayet / Hadis', type: 'Religiøs', status: 'Av', enabled: false, locked: false },
+  { id: 'admin-chat', name: 'Admin Chat', type: 'Premium', status: 'Planlagt', enabled: false, locked: false },
 ];
 
 const quickLinks = [
@@ -86,6 +87,19 @@ function SectionCard({ title, icon: Icon, children }: any) {
 }
 
 export function OwnerPanel() {
+  const [modules, setModules] = useState(defaultModules);
+  const activeModules = useMemo(() => modules.filter((mod) => mod.enabled).length, [modules]);
+
+  const toggleModule = (id: string) => {
+    setModules((prev) =>
+      prev.map((mod) =>
+        mod.id === id && !mod.locked
+          ? { ...mod, enabled: !mod.enabled, status: !mod.enabled ? 'Aktiv' : 'Av' }
+          : mod
+      )
+    );
+  };
+
   return (
     <div className="p-4 space-y-5" style={{ color: brand.text }}>
       <div className="rounded-3xl p-5 shadow-sm border-2 overflow-hidden relative" style={{ backgroundColor: brand.secondary, color: brand.secondaryText, borderColor: mix(brand.primary, 24) }}>
@@ -111,7 +125,7 @@ export function OwnerPanel() {
 
       <div className="grid grid-cols-2 gap-3">
         <OwnerCard title="Organisasjoner" value="1" icon={Building2} note="DTIM er første installasjon." />
-        <OwnerCard title="Moduler" value="8" icon={Boxes} note="Core + tillegg + religiøse." />
+        <OwnerCard title="Aktive moduler" value={activeModules} icon={Boxes} note="Core + valgte tillegg." />
         <OwnerCard title="Hosting" value="2" icon={Cloud} note="Self Hosted / Managed." />
         <OwnerCard title="Status" value="Plan" icon={Rocket} note="Første Owner-skall er aktivt." />
       </div>
@@ -162,15 +176,23 @@ export function OwnerPanel() {
       <SectionCard title="Modulbibliotek" icon={Boxes}>
         <div className="space-y-2">
           {modules.map((mod) => (
-            <div key={mod.name} className="flex items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: mix(brand.primary, 16), backgroundColor: mix(brand.primary, 4, '#FFFFFF') }}>
-              <div>
-                <p className="text-sm font-medium">{mod.name}</p>
-                <p className="text-[11px] opacity-50">{mod.type}</p>
-              </div>
-              <span className="text-[10px] uppercase px-2 py-1 rounded-full" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>{mod.status}</span>
+            <div key={mod.id} className="flex items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: mix(brand.primary, 16), backgroundColor: mod.enabled ? mix(brand.primary, 4, '#FFFFFF') : '#FFFFFF' }}>
+              <button type="button" onClick={() => toggleModule(mod.id)} disabled={mod.locked} className="flex flex-1 items-center justify-between gap-3 text-left disabled:cursor-not-allowed">
+                <div>
+                  <p className="text-sm font-medium">{mod.name}</p>
+                  <p className="text-[11px] opacity-50">{mod.type}{mod.locked ? ' · låst core' : ''}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] uppercase px-2 py-1 rounded-full" style={{ backgroundColor: mod.enabled ? mix(brand.primary, 12) : mix(brand.text, 8), color: mod.enabled ? brand.primary : mix(brand.text, 55) }}>{mod.status}</span>
+                  <span className="relative inline-flex h-6 w-11 items-center rounded-full transition" style={{ backgroundColor: mod.enabled ? brand.primary : mix(brand.text, 18) }}>
+                    <span className="inline-block h-5 w-5 transform rounded-full bg-white transition" style={{ transform: mod.enabled ? 'translateX(22px)' : 'translateX(2px)' }} />
+                  </span>
+                </div>
+              </button>
             </div>
           ))}
         </div>
+        <p className="text-xs opacity-50 mt-3">Bryterne er foreløpig lokale i Owner-skallet. Neste steg er å lagre dette per organisasjon i Supabase.</p>
       </SectionCard>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
