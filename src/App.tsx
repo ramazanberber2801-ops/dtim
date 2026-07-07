@@ -110,7 +110,7 @@ function AppContent() {
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
-  const [activeModules, setActiveModules] = useState<Record<string, boolean>>({ donation: true });
+  const [activeModules, setActiveModules] = useState<Record<string, boolean>>({ donation: true, contact: true });
 
   const brandPrimary = safeColor(settings?.brandingPrimaryColor, '#C5A880');
   const brandSecondary = safeColor(settings?.brandingSecondaryColor, '#2D2A26');
@@ -126,6 +126,7 @@ function AppContent() {
   } as React.CSSProperties;
 
   const donationEnabled = activeModules.donation !== false;
+  const contactEnabled = activeModules.contact !== false;
 
   useEffect(() => {
     if (isInitialized && isAdmin) {
@@ -155,6 +156,12 @@ function AppContent() {
         setActiveModules((prev) => ({ ...prev, ...next }));
       });
   }, [isInitialized]);
+
+  useEffect(() => {
+    if (page === 'contact' && !contactEnabled) {
+      setPage('home');
+    }
+  }, [page, contactEnabled]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -235,7 +242,7 @@ function AppContent() {
   return (
     <div className="min-h-screen" style={{ ...brandVars, backgroundColor: 'var(--brand-background)', color: 'var(--brand-text)' }}>
       {page === 'home' && <HomePage />}
-      {page === 'contact' && <ContactPage />}
+      {page === 'contact' && contactEnabled && <ContactPage />}
 
       <InstallButton onShowGuide={handleShowGuide} />
 
@@ -245,6 +252,7 @@ function AppContent() {
         onDonate={() => donationEnabled && setShowDonate(true)}
         onSecretTrigger={handleSecretTrigger}
         showDonation={donationEnabled}
+        showContact={contactEnabled}
       />
 
       <AdminLoginModal
