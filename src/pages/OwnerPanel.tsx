@@ -9,6 +9,7 @@ import {
   Github,
   LayoutDashboard,
   Palette,
+  Plus,
   Rocket,
   Server,
   ShieldCheck,
@@ -38,20 +39,50 @@ const defaultModules = [
   { id: 'admin-chat', name: 'Admin Chat', type: 'Premium', status: 'Planlagt', enabled: false, locked: false },
 ];
 
-const quickLinks = [
-  { label: 'Live app', url: '/', icon: ExternalLink, note: 'Åpner aktiv app' },
-  { label: 'GitHub repo', url: 'https://github.com/ramazanberber2801-ops/dtim', icon: Github, note: 'Kodebase' },
-  { label: 'Vercel project', url: '', icon: Rocket, note: 'Legges inn per organisasjon' },
-  { label: 'Supabase project', url: '', icon: Server, note: 'Legges inn per organisasjon' },
+type Organization = {
+  id: string;
+  name: string;
+  status: 'Aktiv' | 'Prøve' | 'Frosset';
+  hosting: 'Managed' | 'Self Hosted';
+  domain: string;
+  liveUrl: string;
+  vercelUrl: string;
+  supabaseUrl: string;
+  githubUrl: string;
+};
+
+const defaultOrganizations: Organization[] = [
+  {
+    id: 'dtim',
+    name: 'DTIM',
+    status: 'Aktiv',
+    hosting: 'Managed',
+    domain: 'dtim.no',
+    liveUrl: '/',
+    vercelUrl: '',
+    supabaseUrl: '',
+    githubUrl: 'https://github.com/ramazanberber2801-ops/dtim',
+  },
 ];
 
+const emptyOrganization: Organization = {
+  id: '',
+  name: '',
+  status: 'Prøve',
+  hosting: 'Managed',
+  domain: '',
+  liveUrl: '',
+  vercelUrl: '',
+  supabaseUrl: '',
+  githubUrl: '',
+};
+
 const roadmap = [
-  'Opprett organisasjon',
-  'Velg Self Hosted / Managed',
-  'Velg moduler',
-  'Velg branding',
+  'Koble organisasjoner til Supabase',
+  'Lagre moduler per organisasjon',
+  'Velg branding per organisasjon',
   'Velg theme og layout',
-  'Opprett superadmin',
+  'Opprett superadmin per organisasjon',
   'Eksporter/importer konfigurasjon',
 ];
 
@@ -86,9 +117,25 @@ function SectionCard({ title, icon: Icon, children }: any) {
   );
 }
 
+function OwnerInput({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
+  return (
+    <input
+      className="w-full px-4 py-3 rounded-xl border bg-white text-sm"
+      style={{ borderColor: mix(brand.primary, 22), color: brand.text }}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+    />
+  );
+}
+
 export function OwnerPanel() {
   const [modules, setModules] = useState(defaultModules);
+  const [organizations, setOrganizations] = useState<Organization[]>(defaultOrganizations);
+  const [selectedOrgId, setSelectedOrgId] = useState('dtim');
+  const [form, setForm] = useState<Organization>(defaultOrganizations[0]);
   const activeModules = useMemo(() => modules.filter((mod) => mod.enabled).length, [modules]);
+  const selectedOrg = organizations.find((org) => org.id === selectedOrgId) || organizations[0];
 
   const toggleModule = (id: string) => {
     setModules((prev) =>
@@ -99,6 +146,34 @@ export function OwnerPanel() {
       )
     );
   };
+
+  const selectOrganization = (org: Organization) => {
+    setSelectedOrgId(org.id);
+    setForm(org);
+  };
+
+  const newOrganization = () => {
+    const id = `org-${Date.now()}`;
+    const org = { ...emptyOrganization, id, name: 'Ny organisasjon' };
+    setOrganizations((prev) => [...prev, org]);
+    setSelectedOrgId(id);
+    setForm(org);
+  };
+
+  const saveOrganization = () => {
+    const cleanName = form.name.trim() || 'Uten navn';
+    const cleanOrg = { ...form, name: cleanName, id: form.id || `org-${Date.now()}` };
+    setOrganizations((prev) => prev.map((org) => (org.id === selectedOrgId ? cleanOrg : org)));
+    setSelectedOrgId(cleanOrg.id);
+    setForm(cleanOrg);
+  };
+
+  const quickLinks = [
+    { label: 'Live app', url: selectedOrg?.liveUrl || '/', icon: ExternalLink, note: selectedOrg?.domain || 'Åpner aktiv app' },
+    { label: 'GitHub repo', url: selectedOrg?.githubUrl || '', icon: Github, note: 'Kodebase' },
+    { label: 'Vercel project', url: selectedOrg?.vercelUrl || '', icon: Rocket, note: 'Deployment' },
+    { label: 'Supabase project', url: selectedOrg?.supabaseUrl || '', icon: Server, note: 'Database' },
+  ];
 
   return (
     <div className="p-4 space-y-5" style={{ color: brand.text }}>
@@ -115,20 +190,74 @@ export function OwnerPanel() {
             </div>
           </div>
           <p className="text-sm opacity-75 max-w-xl">Kontrollsenteret for organisasjoner, moduler, branding, themes, layouts, hosting og pakker.</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {['Branding', 'Modules', 'Themes', 'Layouts', 'Hosting'].map((item) => (
-              <span key={item} className="text-[11px] px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>{item}</span>
-            ))}
-          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <OwnerCard title="Organisasjoner" value="1" icon={Building2} note="DTIM er første installasjon." />
+        <OwnerCard title="Organisasjoner" value={organizations.length} icon={Building2} note={`Valgt: ${selectedOrg?.name || 'Ingen'}`} />
         <OwnerCard title="Aktive moduler" value={activeModules} icon={Boxes} note="Core + valgte tillegg." />
-        <OwnerCard title="Hosting" value="2" icon={Cloud} note="Self Hosted / Managed." />
-        <OwnerCard title="Status" value="Plan" icon={Rocket} note="Første Owner-skall er aktivt." />
+        <OwnerCard title="Hosting" value={selectedOrg?.hosting || 'Managed'} icon={Cloud} note={selectedOrg?.status || 'Aktiv'} />
+        <OwnerCard title="Status" value="Plan" icon={Rocket} note="Organisasjonsregister er lokalt." />
       </div>
+
+      <SectionCard title="Organisasjoner" icon={Building2}>
+        <div className="space-y-3">
+          <button type="button" onClick={newOrganization} className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
+            <Plus size={16} /> Ny organisasjon
+          </button>
+
+          <div className="space-y-2">
+            {organizations.map((org) => {
+              const active = org.id === selectedOrgId;
+              return (
+                <button
+                  key={org.id}
+                  type="button"
+                  onClick={() => selectOrganization(org)}
+                  className="w-full rounded-xl border p-3 text-left"
+                  style={{ borderColor: active ? brand.primary : mix(brand.primary, 16), backgroundColor: active ? mix(brand.primary, 8, '#FFFFFF') : '#FFFFFF' }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">{org.name}</p>
+                      <p className="text-[11px] opacity-50">{org.domain || 'Ingen domene'} · {org.hosting}</p>
+                    </div>
+                    <span className="text-[10px] uppercase px-2 py-1 rounded-full" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>{org.status}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Rediger organisasjon" icon={Building2}>
+        <div className="space-y-3">
+          <OwnerInput value={form.name} onChange={(value) => setForm((prev) => ({ ...prev, name: value }))} placeholder="Organisasjonsnavn" />
+          <OwnerInput value={form.domain} onChange={(value) => setForm((prev) => ({ ...prev, domain: value }))} placeholder="Domene" />
+          <OwnerInput value={form.liveUrl} onChange={(value) => setForm((prev) => ({ ...prev, liveUrl: value }))} placeholder="Live app URL" />
+          <OwnerInput value={form.vercelUrl} onChange={(value) => setForm((prev) => ({ ...prev, vercelUrl: value }))} placeholder="Vercel project URL" />
+          <OwnerInput value={form.supabaseUrl} onChange={(value) => setForm((prev) => ({ ...prev, supabaseUrl: value }))} placeholder="Supabase project URL" />
+          <OwnerInput value={form.githubUrl} onChange={(value) => setForm((prev) => ({ ...prev, githubUrl: value }))} placeholder="GitHub repo URL" />
+
+          <div className="grid grid-cols-2 gap-3">
+            <select className="px-4 py-3 rounded-xl border bg-white text-sm" style={{ borderColor: mix(brand.primary, 22), color: brand.text }} value={form.hosting} onChange={(e) => setForm((prev) => ({ ...prev, hosting: e.target.value as Organization['hosting'] }))}>
+              <option>Managed</option>
+              <option>Self Hosted</option>
+            </select>
+            <select className="px-4 py-3 rounded-xl border bg-white text-sm" style={{ borderColor: mix(brand.primary, 22), color: brand.text }} value={form.status} onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as Organization['status'] }))}>
+              <option>Aktiv</option>
+              <option>Prøve</option>
+              <option>Frosset</option>
+            </select>
+          </div>
+
+          <button type="button" onClick={saveOrganization} className="w-full py-3 rounded-xl text-sm font-medium" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
+            Lagre organisasjon
+          </button>
+          <p className="text-xs opacity-50">Denne versjonen lagres lokalt i Owner-panelet. Neste steg er Supabase-tabell.</p>
+        </div>
+      </SectionCard>
 
       <SectionCard title="Drift-lenker" icon={ExternalLink}>
         <div className="space-y-2">
@@ -150,26 +279,8 @@ export function OwnerPanel() {
               </div>
             );
 
-            return disabled ? (
-              <div key={link.label} className="opacity-75">{content}</div>
-            ) : (
-              <a key={link.label} href={link.url} target={link.url.startsWith('http') ? '_blank' : '_self'} rel="noreferrer">
-                {content}
-              </a>
-            );
+            return disabled ? <div key={link.label} className="opacity-75">{content}</div> : <a key={link.label} href={link.url} target={link.url.startsWith('http') ? '_blank' : '_self'} rel="noreferrer">{content}</a>;
           })}
-        </div>
-        <p className="text-xs opacity-50 mt-3">Senere lagres liveAppUrl, vercelProjectUrl, supabaseProjectUrl og githubRepoUrl per organisasjon.</p>
-      </SectionCard>
-
-      <SectionCard title="Opprett organisasjon" icon={Building2}>
-        <div className="space-y-3">
-          <input disabled className="w-full px-4 py-3 rounded-xl border bg-white text-sm opacity-75" style={{ borderColor: mix(brand.primary, 22), color: brand.text }} placeholder="Organisasjonsnavn" />
-          <div className="grid grid-cols-2 gap-3">
-            <button disabled className="py-3 rounded-xl text-sm font-medium border" style={{ borderColor: mix(brand.primary, 30), color: brand.text }}><Server size={16} className="inline mr-1" /> Self Hosted</button>
-            <button disabled className="py-3 rounded-xl text-sm font-medium" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Cloud size={16} className="inline mr-1" /> Managed</button>
-          </div>
-          <p className="text-xs opacity-50">Dette er første visuelle skall. Funksjon kobles til i neste steg.</p>
         </div>
       </SectionCard>
 
@@ -192,7 +303,7 @@ export function OwnerPanel() {
             </div>
           ))}
         </div>
-        <p className="text-xs opacity-50 mt-3">Bryterne er foreløpig lokale i Owner-skallet. Neste steg er å lagre dette per organisasjon i Supabase.</p>
+        <p className="text-xs opacity-50 mt-3">Neste steg er å lagre modulene per valgt organisasjon i Supabase.</p>
       </SectionCard>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
