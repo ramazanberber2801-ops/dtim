@@ -8,9 +8,10 @@ interface BottomNavProps {
   onDonate: () => void;
   onSecretTrigger: () => void;
   showDonation?: boolean;
+  showContact?: boolean;
 }
 
-export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, showDonation = true }: BottomNavProps) {
+export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, showDonation = true, showContact = true }: BottomNavProps) {
   const inactiveColor = 'color-mix(in srgb, var(--brand-text) 40%, transparent)';
 
   return (
@@ -58,22 +59,24 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, show
             </div>
           )}
 
-          <button
-            onClick={() => onNavigate('contact')}
-            className="flex flex-col items-center gap-1 py-2 px-6 transition-colors"
-          >
-            <Phone
-              size={22}
-              style={{ color: current === 'contact' ? 'var(--brand-primary)' : inactiveColor }}
-              strokeWidth={current === 'contact' ? 2.5 : 2}
-            />
-            <span
-              className="text-[10px] font-medium"
-              style={{ color: current === 'contact' ? 'var(--brand-primary)' : inactiveColor }}
+          {showContact && (
+            <button
+              onClick={() => onNavigate('contact')}
+              className="flex flex-col items-center gap-1 py-2 px-6 transition-colors"
             >
-              İletişim
-            </span>
-          </button>
+              <Phone
+                size={22}
+                style={{ color: current === 'contact' ? 'var(--brand-primary)' : inactiveColor }}
+                strokeWidth={current === 'contact' ? 2.5 : 2}
+              />
+              <span
+                className="text-[10px] font-medium"
+                style={{ color: current === 'contact' ? 'var(--brand-primary)' : inactiveColor }}
+              >
+                İletişim
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="absolute bottom-[env(safe-area-inset-bottom)] right-2 mb-2">
