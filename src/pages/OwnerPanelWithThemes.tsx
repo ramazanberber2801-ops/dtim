@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Palette, RotateCcw, Search, Star } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Palette, RotateCcw, Search, Star } from 'lucide-react';
 import { OwnerPanel as BaseOwnerPanel } from './OwnerPanelPersisted';
 import { supabase } from '../lib/supabase';
 import { themes, type ThemeCategory } from '../lib/themeEngine';
+import { readableTextColor, themeContrastSummary } from '../lib/contrastEngine';
 
 const brand = {
   primary: 'var(--brand-primary)',
@@ -22,24 +23,14 @@ const categories: Array<{ id: ThemeCategory | 'all'; label: string }> = [
 
 const recommendedIds = ['classic-mosque', 'modern-mosque', 'nordic-mosque', 'dark-emerald'];
 
-function contrastText(hex: string) {
-  const value = hex.replace('#', '');
-  const n = parseInt(value, 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.58 ? '#2D2A26' : '#FFFFFF';
-}
-
 function setThemeVars(theme: (typeof themes)[number]) {
   const root = document.documentElement;
   root.style.setProperty('--brand-primary', theme.tokens.primary);
   root.style.setProperty('--brand-secondary', theme.tokens.secondary);
   root.style.setProperty('--brand-background', theme.tokens.background);
   root.style.setProperty('--brand-text', theme.tokens.text);
-  root.style.setProperty('--brand-primary-text', contrastText(theme.tokens.primary));
-  root.style.setProperty('--brand-secondary-text', contrastText(theme.tokens.secondary));
+  root.style.setProperty('--brand-primary-text', readableTextColor(theme.tokens.primary));
+  root.style.setProperty('--brand-secondary-text', readableTextColor(theme.tokens.secondary));
 }
 
 function restoreThemeVars(snapshot: Record<string, string>) {
@@ -228,6 +219,9 @@ export function OwnerPanel() {
 }
 
 function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPreview, onApply }: { theme: (typeof themes)[number]; favorite: boolean; isActive: boolean; isPreviewing: boolean; onFavorite: () => void; onPreview: () => void; onApply: () => void }) {
+  const contrast = themeContrastSummary(theme.tokens);
+  const statusColor = contrast.passed ? '#16A34A' : '#D97706';
+
   return (
     <div className="rounded-2xl border p-3" style={{ borderColor: isPreviewing || isActive ? theme.tokens.primary : mix(brand.primary, 14) }}>
       <div
@@ -266,6 +260,21 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPrev
         </div>
       </div>
 
+      <div className="mt-3 rounded-xl border p-2" style={{ borderColor: contrast.passed ? '#16A34A33' : '#D9770633', backgroundColor: contrast.passed ? '#DCFCE733' : '#FEF3C733' }}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium flex items-center gap-1" style={{ color: statusColor }}>
+            {contrast.passed ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+            {contrast.passed ? 'Kontrast bestått' : 'Må forbedres'}
+          </span>
+          <span className="text-[11px] opacity-60">{contrast.score}</span>
+        </div>
+        {!contrast.passed && (
+          <p className="text-[11px] opacity-60 mt-1">
+            Laveste kontrast: {contrast.minRatio}:1. {contrast.failed[0]?.recommendation}
+          </p>
+        )}
+      </div>
+
       <div className="flex gap-2 mt-3">
         <span className="w-8 h-8 rounded-full border" style={{ backgroundColor: theme.tokens.primary, borderColor: mix(brand.primary, 16) }} />
         <span className="w-8 h-8 rounded-full border" style={{ backgroundColor: theme.tokens.secondary, borderColor: mix(brand.primary, 16) }} />
@@ -278,7 +287,7 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPrev
           type="button"
           onClick={onPreview}
           className="rounded-xl py-2.5 text-xs font-medium"
-          style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? contrastText(theme.tokens.primary) : brand.primary }}
+          style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? readableTextColor(theme.tokens.primary) : brand.primary }}
         >
           {isPreviewing ? 'Preview aktiv' : 'Prøv tema'}
         </button>
@@ -286,7 +295,7 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPrev
           type="button"
           onClick={onApply}
           className="rounded-xl py-2.5 text-xs font-medium"
-          style={{ backgroundColor: theme.tokens.primary, color: contrastText(theme.tokens.primary) }}
+          style={{ backgroundColor: theme.tokens.primary, color: readableTextColor(theme.tokens.primary) }}
         >
           Bruk tema
         </button>
