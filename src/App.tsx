@@ -10,6 +10,7 @@ import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
 import { supabase } from './lib/supabase';
 import { useOrganizationModules } from './lib/moduleEngine';
+import { getTheme } from './lib/themeEngine';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
@@ -112,11 +113,13 @@ function AppContent() {
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
+  const [themeId, setThemeId] = useState('classic-mosque');
 
-  const brandPrimary = safeColor(settings?.brandingPrimaryColor, '#C5A880');
-  const brandSecondary = safeColor(settings?.brandingSecondaryColor, '#2D2A26');
-  const brandBackground = safeColor(settings?.brandingBackgroundColor, '#FAF6F0');
-  const brandText = safeColor(settings?.brandingTextColor, '#2D2A26');
+  const selectedTheme = getTheme(themeId);
+  const brandPrimary = safeColor(selectedTheme?.tokens.primary || settings?.brandingPrimaryColor, '#C5A880');
+  const brandSecondary = safeColor(selectedTheme?.tokens.secondary || settings?.brandingSecondaryColor, '#2D2A26');
+  const brandBackground = safeColor(selectedTheme?.tokens.background || settings?.brandingBackgroundColor, '#FAF6F0');
+  const brandText = safeColor(selectedTheme?.tokens.text || settings?.brandingTextColor, '#2D2A26');
   const brandVars = {
     '--brand-primary': brandPrimary,
     '--brand-secondary': brandSecondary,
@@ -136,6 +139,26 @@ function AppContent() {
       setShowPanel(false);
     }
   }, [isInitialized, isAdmin]);
+
+  useEffect(() => {
+    if (!isInitialized || !supabase) return;
+
+    supabase
+      .from('organizations')
+      .select('theme_id')
+      .eq('id', 'dtim')
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Kunne ikke hente organisasjonstema:', error.message);
+          return;
+        }
+
+        if (data?.theme_id) {
+          setThemeId(data.theme_id);
+        }
+      });
+  }, [isInitialized]);
 
   useEffect(() => {
     if (page === 'contact' && !contactEnabled) {
