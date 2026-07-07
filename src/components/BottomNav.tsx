@@ -53,12 +53,13 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, show
   const inactiveColor = 'color-mix(in srgb, var(--brand-text) 40%, transparent)';
 
   useEffect(() => {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
 
     let alive = true;
 
     const load = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('organization_modules')
         .select('module_id, enabled')
         .eq('organization_id', 'dtim');
