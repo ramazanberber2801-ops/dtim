@@ -1,1 +1,1 @@
-export { OwnerPanel } from './OwnerPanelPersisted';
+export { OwnerPanel } from './OwnerPanelWithThemes';
