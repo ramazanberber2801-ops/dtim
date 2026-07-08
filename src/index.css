@@ -20,6 +20,8 @@
   --brand-card-text: var(--brand-text);
   --brand-border: color-mix(in srgb, var(--brand-primary) 20%, transparent);
   --brand-muted-text: color-mix(in srgb, var(--brand-text) 58%, transparent);
+  --brand-soft-text: color-mix(in srgb, var(--brand-text) 72%, transparent);
+  --brand-subtle: color-mix(in srgb, var(--brand-primary) 10%, var(--brand-card));
   --brand-surface: color-mix(in srgb, var(--brand-background) 92%, #FFFFFF 8%);
 }
 
@@ -75,6 +77,35 @@ body {
 .bg-white {
   background-color: var(--brand-card) !important;
   color: var(--brand-card-text);
+}
+
+.bg-cream {
+  background-color: var(--brand-background) !important;
+  color: var(--brand-text);
+}
+
+.text-charcoal {
+  color: var(--brand-text) !important;
+}
+
+.text-gold {
+  color: var(--brand-primary) !important;
+}
+
+.bg-gold {
+  background-color: var(--brand-primary) !important;
+  color: var(--brand-primary-text) !important;
+}
+
+.border-gold {
+  border-color: var(--brand-primary) !important;
+}
+
+.opacity-40,
+.opacity-50,
+.opacity-60,
+.opacity-70 {
+  color: var(--brand-muted-text);
 }
 
 .border,
