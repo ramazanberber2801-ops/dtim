@@ -10,7 +10,6 @@ interface SohbetModalProps {
 const brand = {
   primary: 'var(--brand-primary)',
   secondary: 'var(--brand-secondary)',
-  background: 'var(--brand-background)',
   text: 'var(--brand-text)',
   primaryText: 'var(--brand-primary-text)',
 };
@@ -125,11 +124,6 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
   });
 
   const imageSrc = item.imageBase64 || item.image_base64;
-  const infoCardStyle = {
-    backgroundColor: '#FFFFFF',
-    borderColor: mix(brand.primary, 20),
-    color: mix(brand.text, 70),
-  };
 
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center p-0 sm:p-4 sm:py-8">
@@ -139,22 +133,12 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
         onClick={onClose}
       />
 
-      <div
-        className="relative w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl border-2 overflow-hidden max-h-screen sm:max-h-[calc(100vh-4rem)] flex flex-col"
-        style={{
-          backgroundColor: brand.background,
-          color: brand.text,
-          borderColor: mix(brand.primary, 30),
-        }}
-      >
-        <div
-          className="flex items-center justify-between px-5 py-4 border-b-2 sticky top-0 z-10"
-          style={{ backgroundColor: '#FFFFFF', borderColor: mix(brand.primary, 20) }}
-        >
+      <div className="theme-surface relative w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl border-2 overflow-hidden max-h-screen sm:max-h-[calc(100vh-4rem)] flex flex-col">
+        <div className="theme-surface flex items-center justify-between px-5 py-4 border-b-2 sticky top-0 z-10">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <span
               className="text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded"
-              style={{ backgroundColor: mix(brand.primary, 10), color: brand.primary }}
+              style={{ backgroundColor: 'var(--brand-subtle)', color: brand.primary }}
             >
               Sohbet / Ders
             </span>
@@ -163,7 +147,7 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center transition-colors shrink-0"
-            style={{ backgroundColor: mix(brand.primary, 10), color: mix(brand.text, 65) }}
+            style={{ backgroundColor: 'var(--brand-subtle)', color: mix(brand.text, 65) }}
             aria-label="Kapat"
           >
             <X size={20} />
@@ -185,22 +169,22 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-              <div className="flex items-center gap-2 text-sm rounded-lg border px-3 py-2" style={infoCardStyle}>
+              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
                 <Calendar size={15} className="shrink-0" style={{ color: brand.primary }} />
                 <span className="capitalize">{formattedDate}</span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm rounded-lg border px-3 py-2" style={infoCardStyle}>
+              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
                 <Clock size={15} className="shrink-0" style={{ color: brand.primary }} />
                 <span className="tabular-nums">{item.time}</span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm rounded-lg border px-3 py-2" style={infoCardStyle}>
+              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
                 <MapPin size={15} className="shrink-0" style={{ color: brand.primary }} />
                 <span>{item.location}</span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm rounded-lg border px-3 py-2" style={infoCardStyle}>
+              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
                 <User size={15} className="shrink-0" style={{ color: brand.primary }} />
                 <span>{item.speaker}</span>
               </div>
@@ -216,8 +200,7 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
               <button
                 type="button"
                 onClick={() => addToCalendar(item, false)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 font-semibold text-sm transition-colors shadow-sm"
-                style={{ backgroundColor: '#FFFFFF', borderColor: mix(brand.primary, 30), color: brand.text }}
+                className="theme-card w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 font-semibold text-sm transition-colors shadow-sm"
               >
                 <Calendar size={18} style={{ color: brand.primary }} />
                 Takvime Ekle
@@ -226,15 +209,14 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
               <button
                 type="button"
                 onClick={() => addToCalendar(item, true)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
-                style={{ backgroundColor: brand.primary, color: brand.primaryText }}
+                className="theme-primary-button w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
               >
                 <Bell size={18} />
                 Hatırlat Bana
               </button>
             </div>
 
-            <p className="text-[10px] text-center mb-4 opacity-45">
+            <p className="text-[10px] text-center mb-4 theme-muted">
               Hatırlatma seçeneği takvime 1 saat önce alarm ekler.
             </p>
 
