@@ -9,7 +9,6 @@ interface NewsModalProps {
 const brand = {
   primary: 'var(--brand-primary)',
   secondary: 'var(--brand-secondary)',
-  background: 'var(--brand-background)',
   text: 'var(--brand-text)',
 };
 
@@ -35,21 +34,11 @@ export function NewsModal({ item, onClose }: NewsModalProps) {
         onClick={onClose}
       />
 
-      <div
-        className="relative w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl border overflow-hidden max-h-screen sm:max-h-[calc(100vh-4rem)] flex flex-col"
-        style={{
-          backgroundColor: brand.background,
-          color: brand.text,
-          borderColor: mix(brand.primary, 30),
-        }}
-      >
-        <div
-          className="flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10"
-          style={{ backgroundColor: brand.background, borderColor: mix(brand.primary, 20) }}
-        >
+      <div className="theme-surface relative w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl border overflow-hidden max-h-screen sm:max-h-[calc(100vh-4rem)] flex flex-col">
+        <div className="theme-surface flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Tag size={16} className="shrink-0" style={{ color: brand.primary }} />
-            <span className="text-xs font-medium uppercase tracking-wide truncate opacity-60">
+            <span className="text-xs font-medium uppercase tracking-wide truncate theme-muted">
               {item.category}
             </span>
           </div>
@@ -57,7 +46,7 @@ export function NewsModal({ item, onClose }: NewsModalProps) {
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center transition-colors shrink-0"
-            style={{ backgroundColor: mix(brand.primary, 10), color: mix(brand.text, 70) }}
+            style={{ backgroundColor: 'var(--brand-subtle)', color: mix(brand.text, 70) }}
             aria-label="Kapat"
           >
             <X size={20} />
@@ -78,7 +67,7 @@ export function NewsModal({ item, onClose }: NewsModalProps) {
               {item.title}
             </h2>
 
-            <div className="flex items-center gap-3 text-xs opacity-50 mb-4">
+            <div className="flex items-center gap-3 text-xs theme-muted mb-4">
               <span className="flex items-center gap-1">
                 <Calendar size={13} />
                 {formattedDate}
