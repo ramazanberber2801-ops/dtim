@@ -62,8 +62,8 @@ export function ForgotPasswordModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-black/70 flex items-center justify-center p-4">
-      <div className="bg-[#FAF6F0] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary) 70%, transparent)' }}>
+      <div className="theme-surface w-full max-w-sm rounded-2xl p-6 shadow-2xl border-2">
         <div className="flex justify-between mb-5">
           <h2 className="font-serif text-xl">Şifremi Sıfırla</h2>
           <button onClick={onClose}>
@@ -71,7 +71,7 @@ export function ForgotPasswordModal({
           </button>
         </div>
 
-        <p className="text-xs text-[#2D2A26]/60 mb-4">
+        <p className="text-xs theme-muted mb-4">
           E-posta adresinizi girin. Supabase Auth size güvenli bir şifre sıfırlama bağlantısı gönderecek.
         </p>
 
@@ -81,7 +81,7 @@ export function ForgotPasswordModal({
         <form onSubmit={sendResetEmail} className="space-y-4">
           <input
             type="email"
-            className="w-full p-3 border rounded-xl"
+            className="theme-input w-full p-3 border rounded-xl"
             placeholder="E-posta"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -91,7 +91,7 @@ export function ForgotPasswordModal({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium"
+            className="theme-primary-button w-full p-3 rounded-xl font-medium disabled:opacity-60"
           >
             {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Sıfırlama E-postası Gönder'}
           </button>
