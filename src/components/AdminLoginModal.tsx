@@ -93,8 +93,8 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
 
   return (
     <>
-      <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-        <div className="bg-[#FAF6F0] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary) 60%, transparent)' }}>
+        <div className="theme-surface w-full max-w-sm rounded-2xl p-6 shadow-2xl border-2">
           <div className="flex justify-between mb-6">
             <h2 className="font-serif text-xl">{mustChangePassword ? 'Yeni Şifre Belirle' : 'Yönetici Girişi'}</h2>
             <button onClick={onClose}><X size={20} /></button>
@@ -104,7 +104,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="text-red-500 text-xs">{error}</p>}
               <input
-                className="w-full p-3 border rounded-xl"
+                className="theme-input w-full p-3 border rounded-xl"
                 placeholder="E-posta"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
@@ -112,13 +112,13 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
               />
               <input
                 type={showPassword ? 'text' : 'password'}
-                className="w-full p-3 border rounded-xl"
+                className="theme-input w-full p-3 border rounded-xl"
                 placeholder="Şifre"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
               />
-              <label className="flex items-center gap-2 text-xs text-[#2D2A26]/60">
+              <label className="flex items-center gap-2 text-xs theme-muted">
                 <input
                   type="checkbox"
                   checked={showPassword}
@@ -126,19 +126,19 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
                 />
                 Şifreyi göster
               </label>
-              <button type="submit" className="w-full bg-[#C5A880] text-white p-3 rounded-xl">
+              <button type="submit" className="theme-primary-button w-full p-3 rounded-xl font-medium disabled:opacity-60" disabled={loading}>
                 {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Giriş Yap'}
               </button>
             </form>
           ) : (
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <p className="text-xs text-[#2D2A26]/60">
+              <p className="text-xs theme-muted">
                 Geçici şifre ile giriş yaptınız. Devam etmeden önce kalıcı bir şifre belirlemelisiniz.
               </p>
               {error && <p className="text-red-500 text-xs">{error}</p>}
               <input
                 type={showNewPassword ? 'text' : 'password'}
-                className="w-full p-3 border rounded-xl"
+                className="theme-input w-full p-3 border rounded-xl"
                 placeholder="Yeni şifre"
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
@@ -146,13 +146,13 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
               />
               <input
                 type={showNewPassword ? 'text' : 'password'}
-                className="w-full p-3 border rounded-xl"
+                className="theme-input w-full p-3 border rounded-xl"
                 placeholder="Yeni şifre tekrar"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 required
               />
-              <label className="flex items-center gap-2 text-xs text-[#2D2A26]/60">
+              <label className="flex items-center gap-2 text-xs theme-muted">
                 <input
                   type="checkbox"
                   checked={showNewPassword}
@@ -160,14 +160,14 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
                 />
                 Şifreleri göster
               </label>
-              <button type="submit" className="w-full bg-[#C5A880] text-white p-3 rounded-xl">
+              <button type="submit" className="theme-primary-button w-full p-3 rounded-xl font-medium disabled:opacity-60" disabled={changingPassword}>
                 {changingPassword ? <Loader2 className="animate-spin mx-auto" /> : 'Yeni Şifreyi Kaydet'}
               </button>
             </form>
           )}
 
           {!mustChangePassword && (
-            <button onClick={() => setShowForgot(true)} className="w-full text-xs text-[#C5A880] hover:underline mt-4">
+            <button onClick={() => setShowForgot(true)} className="w-full text-xs mt-4 hover:underline" style={{ color: 'var(--brand-primary)' }}>
               Şifremi Unuttum?
             </button>
           )}
