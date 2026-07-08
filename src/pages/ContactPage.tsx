@@ -86,9 +86,9 @@ export function ContactPage() {
   };
 
   const lightCardStyle = {
-    backgroundColor: '#FFFFFF',
-    color: brand.text,
-    borderColor: mix(brand.primary, 25),
+    backgroundColor: 'var(--brand-card)',
+    color: 'var(--brand-card-text)',
+    borderColor: 'var(--brand-border)',
   };
 
   return (
@@ -121,7 +121,7 @@ export function ContactPage() {
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div
-                className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border-2"
+                className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center border-2 theme-card"
                 style={{ borderColor: mix(brand.primary, 30) }}
               >
                 <MapPin size={26} style={{ color: brand.primary }} fill="currentColor" />
@@ -143,8 +143,7 @@ export function ContactPage() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackEvent('contact_click', 'map', 'Finn frem')}
-              className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-colors shadow-md active:scale-[0.98]"
-              style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}
+              className="theme-secondary-panel mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-colors shadow-md active:scale-[0.98]"
             >
               <Navigation size={17} />
               FİNN FREM (YOL TARİFİ)
@@ -158,7 +157,7 @@ export function ContactPage() {
           <div className="flex items-center gap-3 mb-3">
             <div
               className="w-11 h-11 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: mix(brand.primary, 15) }}
+              style={{ backgroundColor: 'var(--brand-subtle)' }}
             >
               {notificationsEnabled ? (
                 <Bell size={22} style={{ color: brand.primary }} />
@@ -277,7 +276,7 @@ export function ContactPage() {
                     href={`tel:${member.phone.replace(/\s/g, '')}`}
                     onClick={() => trackEvent('contact_click', member.id, member.name)}
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0"
-                    style={{ backgroundColor: mix(brand.primary, 15), color: brand.primary }}
+                    style={{ backgroundColor: 'var(--brand-subtle)', color: brand.primary }}
                     aria-label={`${member.name} ara`}
                   >
                     <Phone size={16} />
