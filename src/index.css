@@ -9,14 +9,28 @@
   --color-gold: #C5A880;
 }
 
+:root {
+  --brand-primary: #C5A880;
+  --brand-secondary: #2D2A26;
+  --brand-background: #FAF6F0;
+  --brand-text: #2D2A26;
+  --brand-primary-text: #2D2A26;
+  --brand-secondary-text: #FFFFFF;
+  --brand-card: #FFFFFF;
+  --brand-card-text: var(--brand-text);
+  --brand-border: color-mix(in srgb, var(--brand-primary) 20%, transparent);
+  --brand-muted-text: color-mix(in srgb, var(--brand-text) 58%, transparent);
+  --brand-surface: color-mix(in srgb, var(--brand-background) 92%, #FFFFFF 8%);
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #FAF6F0;
-  color: #2D2A26;
+  background-color: var(--brand-background);
+  color: var(--brand-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
@@ -24,6 +38,37 @@ body {
 
 .font-serif {
   font-family: 'Playfair Display', Georgia, serif;
+}
+
+.theme-card {
+  background-color: var(--brand-card);
+  color: var(--brand-card-text);
+  border-color: var(--brand-border);
+}
+
+.theme-surface {
+  background-color: var(--brand-surface);
+  color: var(--brand-text);
+}
+
+.theme-muted {
+  color: var(--brand-muted-text);
+}
+
+.theme-input {
+  background-color: var(--brand-card);
+  color: var(--brand-text);
+  border-color: var(--brand-border);
+}
+
+.theme-primary-button {
+  background-color: var(--brand-primary);
+  color: var(--brand-primary-text);
+}
+
+.theme-secondary-panel {
+  background-color: var(--brand-secondary);
+  color: var(--brand-secondary-text);
 }
 
 /* Custom scrollbar */
@@ -37,12 +82,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(197, 168, 128, 0.3);
+  background: color-mix(in srgb, var(--brand-primary) 35%, transparent);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(197, 168, 128, 0.5);
+  background: color-mix(in srgb, var(--brand-primary) 55%, transparent);
 }
 
 /* Line clamp utility */
