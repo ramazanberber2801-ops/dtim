@@ -181,6 +181,21 @@ body {
   border-color: color-mix(in srgb, var(--brand-primary) 25%, transparent) !important;
 }
 
+/* HomePage modal bridge */
+.fixed.inset-0 .bg-white.rounded-2xl,
+.fixed.inset-0 .bg-cream.rounded-2xl,
+.fixed.inset-0 .rounded-2xl.bg-white {
+  background-color: var(--brand-card) !important;
+  color: var(--brand-card-text) !important;
+  border-color: var(--brand-border) !important;
+}
+
+.fixed.inset-0 .bg-charcoal,
+.fixed.inset-0 .bg-\[var\(--brand-secondary\)\] {
+  background-color: var(--brand-secondary) !important;
+  color: var(--brand-secondary-text) !important;
+}
+
 .opacity-40,
 .opacity-50,
 .opacity-60,
