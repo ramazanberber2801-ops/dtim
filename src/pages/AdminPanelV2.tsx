@@ -13,14 +13,14 @@ const brand = {
 const mix = (color: string, amount: number, fallback = 'transparent') =>
   `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
-const isSuperAdminRole = (role?: string) => role === 'super_admin' || role === 'superadmin';
+const isOwnerRole = (role?: string) => ['owner', 'super_admin', 'superadmin'].includes(String(role || '').trim());
 
 export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { currentAdmin, logout } = useApp();
 
   if (!open) return null;
 
-  const isSuperadmin = isSuperAdminRole(currentAdmin?.role);
+  const canAccessOwner = isOwnerRole(currentAdmin?.role);
 
   const handleLogout = () => {
     logout();
@@ -37,7 +37,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
           <div>
             <h1 className="font-serif text-lg">Yönetim Paneli V2</h1>
             <p className="text-[10px] opacity-55">
-              {currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin'} · {isSuperadmin ? 'Süper Admin' : 'Admin'}
+              {currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin'} · {canAccessOwner ? 'Owner' : 'Admin'}
             </p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        {isSuperadmin ? <OwnerPanelV2 /> : <div className="p-4 text-sm opacity-60">Sadece Süper Admin har tilgang til Owner V2.</div>}
+        {canAccessOwner ? <OwnerPanelV2 /> : <div className="p-4 text-sm opacity-60">Kun Owner har tilgang til Owner V2.</div>}
       </main>
     </div>
   );
