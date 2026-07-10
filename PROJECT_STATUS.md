@@ -4,7 +4,7 @@ Last updated: July 10, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links and the module library are complete. The admin invitation flow works and must be preserved.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links, module library, hosting and status settings are complete. The admin invitation flow works and must be preserved.
 
 ## Current phase
 
@@ -12,10 +12,9 @@ Owner-created onboarding in Owner Dashboard V2.
 
 Current priority order:
 
-1. Complete hosting and status settings.
-2. Add provisioning timeline.
-3. Complete remaining Owner Dashboard V2 overview work.
-4. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
+1. Add provisioning timeline.
+2. Complete remaining Owner Dashboard V2 overview work.
+3. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
 
 ## Hosting and repository strategy
 
@@ -42,6 +41,9 @@ Current priority order:
 - Module selections save to `organization_modules`.
 - Saved module selections load when an existing organization is selected.
 - New organizations start with the default module configuration.
+- Hosting supports `Managed` and `Self Hosted`.
+- Status supports `Prøve`, `Aktiv` and `Pause`.
+- Hosting and status save to Supabase and load with the selected organization.
 - Service worker uses network-first behavior for the app shell, JavaScript and CSS.
 
 ## Database status
@@ -80,13 +82,6 @@ The working flow must not be broken:
 A previous stale Owner UI was caused by PWA service-worker caching. `public/sw.js` uses network-first behavior for the app shell, JavaScript and CSS. Do not restore cache-first handling for these assets.
 
 ## Remaining Owner Dashboard V2 work
-
-### Hosting and status
-
-Complete:
-
-- Hosting: Managed / Self Hosted
-- Status: Prøve / Aktiv / Pause
 
 ### Provisioning timeline
 
