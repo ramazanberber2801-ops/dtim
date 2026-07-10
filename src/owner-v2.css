@@ -1,0 +1,25 @@
+/* Owner Dashboard V2: keep the organization selector dominant and the create action compact. */
+.p-4.space-y-5 section .flex.gap-2.items-start > .relative.flex-1.min-w-0 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.p-4.space-y-5 section .flex.gap-2.items-start > button.min-h-12 {
+  flex: 0 0 auto;
+  min-height: 3rem;
+  padding-inline: 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 390px) {
+  .p-4.space-y-5 section .flex.gap-2.items-start {
+    gap: 0.5rem;
+  }
+
+  .p-4.space-y-5 section .flex.gap-2.items-start > button.min-h-12 {
+    padding-inline: 0.6rem;
+    font-size: 0.68rem;
+  }
+}
