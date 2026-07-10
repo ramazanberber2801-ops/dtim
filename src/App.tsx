@@ -168,14 +168,16 @@ function AppContent() {
       .then(({ data, error }) => {
         if (error) {
           console.warn('Kunne ikke hente organisasjonstema:', error.message);
+          setThemeLoaded(true);
           return;
         }
 
         if (data?.theme_id) {
           setThemeId(data.theme_id);
         }
-      })
-      .finally(() => setThemeLoaded(true));
+
+        setThemeLoaded(true);
+      });
   }, [isInitialized]);
 
   useEffect(() => {
