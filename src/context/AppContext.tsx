@@ -35,6 +35,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const ADMIN_SAFE_COLUMNS = 'id, username, display_name, role, auth_user_id';
+const ORGANIZATION_ADMIN_COLUMNS = 'id, organization_id, user_id, display_name, email, role, invitation_status';
 
 const sanitizeAdmin = (admin: any | null) => {
   if (!admin) return null;
@@ -48,7 +49,9 @@ const sanitizeAdmin = (admin: any | null) => {
 
   return {
     ...safeAdmin,
-    displayName: safeAdmin.displayName || safeAdmin.display_name || safeAdmin.username,
+    username: safeAdmin.username || safeAdmin.email,
+    auth_user_id: safeAdmin.auth_user_id || safeAdmin.user_id,
+    displayName: safeAdmin.displayName || safeAdmin.display_name || safeAdmin.username || safeAdmin.email,
   };
 };
 
@@ -138,19 +141,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify({ title, body, url: '/' }),
       });
 
-      if (res.ok) {
-        await trackEvent('push_sent', '', title);
-      }
+      if (res.ok) await trackEvent('push_sent', '', title);
     } catch (e) {
       console.error('PUSH ERROR:', e);
     }
   };
 
   const sendSohbetReminder = async (item: any) => {
-    await sendPush(
-      `🔔 ${item.title}`,
-      `${item.date} ${item.time} - ${item.speaker}`
-    );
+    await sendPush(`🔔 ${item.title}`, `${item.date} ${item.time} - ${item.speaker}`);
   };
 
   const loadAllData = async () => {
@@ -166,11 +164,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const [n, s, soh, insp, a, setRes] = await Promise.all([
         client.from('news').select('*').order('date', { ascending: false }),
         client.from('staff').select('*'),
-        client
-          .from('sohbet')
-          .select('*')
-          .gte('date', new Date().toISOString().split('T')[0])
-          .order('date', { ascending: true }),
+        client.from('sohbet').select('*').gte('date', new Date().toISOString().split('T')[0]).order('date', { ascending: true }),
         client.from('inspiration').select('*').limit(1).maybeSingle(),
         client.from('admins').select(ADMIN_SAFE_COLUMNS),
         client.from('settings').select('*').limit(1).maybeSingle(),
@@ -197,8 +191,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const client = supabase;
     if (!client) return false;
 
+    const normalizedEmail = email.trim().toLowerCase();
     const { data: authData, error: authError } = await client.auth.signInWithPassword({
-      email: email.trim(),
+      email: normalizedEmail,
       password,
     });
 
@@ -207,19 +202,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    const { data: adminData, error: adminError } = await client
+    const legacyResult = await client
       .from('admins')
       .select(ADMIN_SAFE_COLUMNS)
       .eq('auth_user_id', authData.user.id)
       .maybeSingle();
 
-    if (!adminData || adminError) {
-      console.error('Admin profile not found:', adminError);
+    let adminProfile = legacyResult.data;
+    let profileError = legacyResult.error;
+
+    if (!adminProfile) {
+      const organizationResult = await client
+        .from('organization_admins')
+        .select(ORGANIZATION_ADMIN_COLUMNS)
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
+
+      if (organizationResult.data) {
+        adminProfile = {
+          ...organizationResult.data,
+          username: organizationResult.data.email || normalizedEmail,
+          auth_user_id: organizationResult.data.user_id,
+        };
+        profileError = null;
+
+        if (organizationResult.data.invitation_status !== 'accepted') {
+          await client
+            .from('organization_admins')
+            .update({ invitation_status: 'accepted', updated_at: new Date().toISOString() })
+            .eq('id', organizationResult.data.id);
+        }
+      } else {
+        profileError = organizationResult.error || profileError;
+      }
+    }
+
+    if (!adminProfile) {
+      console.error('Admin profile not found:', profileError);
       await client.auth.signOut();
       return false;
     }
 
-    const safeAdmin = sanitizeAdmin(adminData);
+    const safeAdmin = sanitizeAdmin(adminProfile);
     setCurrentAdmin(safeAdmin);
     setIsAdmin(true);
     localStorage.setItem('dtim_admin', JSON.stringify(safeAdmin));
@@ -237,18 +261,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addNews = async (item: any) => {
     const client = supabase;
     if (!client) return;
-
     const shouldSendPush = item._sendPush === true;
     const cleanItem = { ...item };
     delete cleanItem._sendPush;
-
     const { error } = await client.from('news').insert([cleanItem]);
-
-    if (error) {
-      alert('Haber eklenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Haber eklenemedi: ' + error.message);
     if (shouldSendPush) await sendPush('Yeni Duyuru', cleanItem.title || 'Yeni haber yayınlandı');
     await loadAllData();
   };
@@ -256,18 +273,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateNews = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-
     const shouldSendPush = item._sendPush === true;
     const cleanItem = { ...item };
     delete cleanItem._sendPush;
-
     const { error } = await client.from('news').update(cleanItem).eq('id', id);
-
-    if (error) {
-      alert('Haber güncellenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Haber güncellenemedi: ' + error.message);
     if (shouldSendPush) await sendPush('Duyuru Güncellendi', cleanItem.title || 'Bir duyuru güncellendi');
     await loadAllData();
   };
@@ -275,78 +285,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteNews = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     const { error } = await client.from('news').delete().eq('id', id);
-    if (error) {
-      alert('Haber silinemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Haber silinemedi: ' + error.message);
     await loadAllData();
   };
 
   const addStaff = async (item: any) => {
     const client = supabase;
     if (!client) return;
-
-    const cleanItem = {
-      id: item.id || `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      ...item,
-    };
-
+    const cleanItem = { id: item.id || `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, ...item };
     const { error } = await client.from('staff').insert([cleanItem]);
-
-    if (error) {
-      alert('Yönetim üyesi eklenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Yönetim üyesi eklenemedi: ' + error.message);
     await loadAllData();
   };
 
   const updateStaff = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-
     const { error } = await client.from('staff').update(item).eq('id', id);
-
-    if (error) {
-      alert('Yönetim üyesi güncellenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Yönetim üyesi güncellenemedi: ' + error.message);
     await loadAllData();
   };
 
   const deleteStaff = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     const { error } = await client.from('staff').delete().eq('id', id);
-
-    if (error) {
-      alert('Yönetim üyesi silinemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Yönetim üyesi silinemedi: ' + error.message);
     await loadAllData();
   };
 
   const addSohbet = async (item: any) => {
     const client = supabase;
     if (!client) return;
-
     const shouldSendPush = item._sendPush === true;
     const cleanItem = { ...item };
     delete cleanItem._sendPush;
-
     const { error } = await client.from('sohbet').insert([cleanItem]);
-
-    if (error) {
-      alert('Sohbet eklenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Sohbet eklenemedi: ' + error.message);
     if (shouldSendPush) await sendPush('Yeni Sohbet / Ders', cleanItem.title || 'Yeni program yayınlandı');
     await loadAllData();
   };
@@ -354,18 +330,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateSohbet = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
-
     const shouldSendPush = item._sendPush === true;
     const cleanItem = { ...item };
     delete cleanItem._sendPush;
-
     const { error } = await client.from('sohbet').update(cleanItem).eq('id', id);
-
-    if (error) {
-      alert('Sohbet güncellenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Sohbet güncellenemedi: ' + error.message);
     if (shouldSendPush) await sendPush('Sohbet / Ders Güncellendi', cleanItem.title || 'Bir program güncellendi');
     await loadAllData();
   };
@@ -373,40 +342,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteSohbet = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     const { error } = await client.from('sohbet').delete().eq('id', id);
-    if (error) {
-      alert('Sohbet silinemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Sohbet silinemedi: ' + error.message);
     await loadAllData();
   };
 
   const updateSettings = async (s: any) => {
     const client = supabase;
     if (!client) return;
-
     const dbSettings = mapSettingsToDb(s);
     const id = s.id || settings.id || 1;
-
-    const { data, error } = await client
-      .from('settings')
-      .update(dbSettings)
-      .eq('id', id)
-      .select('*')
-      .maybeSingle();
-
-    if (error) {
-      alert('Ayarlar kaydedilemedi: ' + error.message);
-      return;
-    }
-
-    if (!data) {
-      alert('Ayarlar kaydedilemedi: settings satırı bulunamadı.');
-      return;
-    }
-
+    const { data, error } = await client.from('settings').update(dbSettings).eq('id', id).select('*').maybeSingle();
+    if (error) return alert('Ayarlar kaydedilemedi: ' + error.message);
+    if (!data) return alert('Ayarlar kaydedilemedi: settings satırı bulunamadı.');
     setSettings(mapSettingsFromDb(data));
     await loadAllData();
   };
@@ -414,20 +362,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateInspiration = async (updates: any) => {
     const client = supabase;
     if (!client || !inspiration?.id) return;
-
     const { error } = await client.from('inspiration').update(updates).eq('id', inspiration.id);
-    if (error) {
-      alert('İlham metni güncellenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('İlham metni güncellenemedi: ' + error.message);
     await loadAllData();
   };
 
   const addAdmin = async (admin: any) => {
     const client = supabase;
     if (!client) return;
-
     const cleanAdmin = {
       id: admin.id,
       username: admin.username,
@@ -435,74 +377,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       role: admin.role || 'admin',
       auth_user_id: admin.auth_user_id || null,
     };
-
     const { error } = await client.from('admins').insert([cleanAdmin]);
-
-    if (error) {
-      alert('Admin eklenemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Admin eklenemedi: ' + error.message);
     await loadAllData();
   };
 
   const deleteAdmin = async (id: string) => {
     const client = supabase;
     if (!client) return;
-
     const { error } = await client.from('admins').delete().eq('id', id);
-    if (error) {
-      alert('Admin silinemedi: ' + error.message);
-      return;
-    }
-
+    if (error) return alert('Admin silinemedi: ' + error.message);
     await loadAllData();
   };
 
   const updateAdminPassword = async (_id: string, newPass: string) => {
     const client = supabase;
     if (!client) return;
-
     const { error } = await client.auth.updateUser({ password: newPass });
-
-    if (error) {
-      alert('Şifre güncellenemedi: ' + error.message);
-      return;
-    }
+    if (error) alert('Şifre güncellenemedi: ' + error.message);
   };
 
   return (
-    <AppContext.Provider
-      value={{
-        news,
-        staff,
-        sohbet,
-        settings,
-        inspiration,
-        admins,
-        currentAdmin,
-        loading,
-        isAdmin,
-        isInitialized,
-        login,
-        logout,
-        addNews,
-        updateNews,
-        deleteNews,
-        addStaff,
-        updateStaff,
-        deleteStaff,
-        addSohbet,
-        updateSohbet,
-        deleteSohbet,
-        sendSohbetReminder,
-        updateSettings,
-        updateInspiration,
-        addAdmin,
-        deleteAdmin,
-        updateAdminPassword,
-      }}
-    >
+    <AppContext.Provider value={{
+      news,
+      staff,
+      sohbet,
+      settings,
+      inspiration,
+      admins,
+      currentAdmin,
+      loading,
+      isAdmin,
+      isInitialized,
+      login,
+      logout,
+      addNews,
+      updateNews,
+      deleteNews,
+      addStaff,
+      updateStaff,
+      deleteStaff,
+      addSohbet,
+      updateSohbet,
+      deleteSohbet,
+      sendSohbetReminder,
+      updateSettings,
+      updateInspiration,
+      addAdmin,
+      deleteAdmin,
+      updateAdminPassword,
+    }}>
       {children}
     </AppContext.Provider>
   );
