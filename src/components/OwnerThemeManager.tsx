@@ -15,13 +15,6 @@ const mix = (color: string, amount: number, fallback = 'transparent') =>
 const availableThemes = themes;
 
 function applyThemePreview(theme: (typeof availableThemes)[number]) {
-  const root = document.documentElement;
-  root.style.setProperty('--brand-primary', theme.tokens.primary);
-  root.style.setProperty('--brand-secondary', theme.tokens.secondary);
-  root.style.setProperty('--brand-background', theme.tokens.background);
-  root.style.setProperty('--brand-text', theme.tokens.text);
-  root.style.setProperty('--brand-card', theme.tokens.card);
-
   const contrast = (hex: string) => {
     const clean = hex.replace('#', '');
     const r = parseInt(clean.slice(0, 2), 16);
@@ -30,8 +23,36 @@ function applyThemePreview(theme: (typeof availableThemes)[number]) {
     return (r * 299 + g * 587 + b * 114) / 1000 > 145 ? '#1F2937' : '#FFFFFF';
   };
 
-  root.style.setProperty('--brand-primary-text', contrast(theme.tokens.primary));
-  root.style.setProperty('--brand-secondary-text', contrast(theme.tokens.secondary));
+  const primaryText = contrast(theme.tokens.primary);
+  const secondaryText = contrast(theme.tokens.secondary);
+  const cardText = contrast(theme.tokens.card) === '#FFFFFF' ? '#FFFFFF' : theme.tokens.text;
+
+  const targets = [
+    document.documentElement,
+    document.getElementById('root')?.firstElementChild as HTMLElement | null,
+  ].filter(Boolean) as HTMLElement[];
+
+  targets.forEach((target) => {
+    target.style.setProperty('--brand-primary', theme.tokens.primary);
+    target.style.setProperty('--brand-secondary', theme.tokens.secondary);
+    target.style.setProperty('--brand-background', theme.tokens.background);
+    target.style.setProperty('--brand-text', theme.tokens.text);
+    target.style.setProperty('--brand-card', theme.tokens.card);
+    target.style.setProperty('--brand-primary-text', primaryText);
+    target.style.setProperty('--brand-secondary-text', secondaryText);
+    target.style.setProperty('--brand-card-text', cardText);
+    target.style.setProperty('--brand-border', `color-mix(in srgb, ${theme.tokens.primary} 20%, transparent)`);
+    target.style.setProperty('--brand-muted-text', `color-mix(in srgb, ${theme.tokens.text} 58%, transparent)`);
+    target.style.setProperty('--brand-soft-text', `color-mix(in srgb, ${theme.tokens.text} 72%, transparent)`);
+    target.style.setProperty('--brand-subtle', `color-mix(in srgb, ${theme.tokens.primary} 10%, ${theme.tokens.card})`);
+    target.style.setProperty('--brand-surface', `color-mix(in srgb, ${theme.tokens.background} 92%, #FFFFFF 8%)`);
+  });
+
+  const appRoot = document.getElementById('root')?.firstElementChild as HTMLElement | null;
+  if (appRoot) {
+    appRoot.style.backgroundColor = theme.tokens.background;
+    appRoot.style.color = theme.tokens.text;
+  }
 }
 
 export function OwnerThemeManager() {
