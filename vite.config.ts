@@ -23,7 +23,7 @@ export default defineConfig(async ({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks(id) {
+          manualChunks(id: string) {
             if (!id.includes('node_modules')) return;
             if (id.includes('@supabase')) return 'supabase';
             if (id.includes('lucide-react')) return 'icons';
