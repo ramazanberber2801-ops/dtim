@@ -46,9 +46,18 @@ export async function subscribeToPushNotifications(organizationId?: string) {
 }
 
 export async function sendPushNotification(input: { title: string; body: string; url?: string; organizationId?: string }) {
+  if (!supabase) throw new Error('Sistemtilkoblingen er ikke tilgjengelig.');
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (sessionError || !accessToken) throw new Error('Du må være innlogget som administrator for å sende varsler.');
+
   const response = await fetch('/api/send-push', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
     body: JSON.stringify({
       title: input.title.trim(),
       body: input.body.trim(),
