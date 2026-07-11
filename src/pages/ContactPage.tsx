@@ -125,16 +125,16 @@ export function ContactPage() {
       <section className="px-4 mt-5">
         <div
           className="rounded-xl border-2 shadow-md p-5"
-          style={{ ...lightCardStyle, color: brand.text }}
+          style={{ backgroundColor: '#FFFFFF', color: '#2D2A26', borderColor: mix(brand.primary, 22) }}
           dir={notificationDirection}
         >
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--brand-subtle)' }}>
+            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: mix(brand.primary, 12) }}>
               {notificationsEnabled ? <Bell size={22} style={{ color: brand.primary }} /> : <BellOff size={22} style={{ color: brand.primary }} />}
             </div>
-            <div className="min-w-0 flex-1" style={{ color: brand.text }}>
-              <h2 className="font-serif text-lg" style={{ color: brand.text }}>{notificationText.title}</h2>
-              <p className="text-sm leading-6 mt-1" style={{ color: `color-mix(in srgb, ${brand.text} 68%, transparent)` }}>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-serif text-lg" style={{ color: '#2D2A26' }}>{notificationText.title}</h2>
+              <p className="text-sm leading-6 mt-1" style={{ color: '#5F5A54' }}>
                 {notificationText.description}
               </p>
             </div>
