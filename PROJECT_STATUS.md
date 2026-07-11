@@ -1,10 +1,10 @@
 # Yasaflow – Project Status
 
-Last updated: July 10, 2026
+Last updated: July 11, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is complete. The organization Administrator Portal resolves administrators to the correct organization. The Members database foundation is now implemented in GitHub and awaits execution in Supabase before the Members UI can be activated. The invitation Edge Function deployment remains deferred until after July 29, 2026.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is complete. Administrator Portal is organization-scoped, and Members V1 now provides the first operational organization module with list, search, status filtering and create/edit.
 
 ## Current phase
 
@@ -12,82 +12,58 @@ Customer Administrator Portal.
 
 Current priority order:
 
-1. Run the Members migration in Supabase.
-2. Build the first Members list and create/edit flow.
-3. Complete organization-scoped News.
-4. Complete organization-scoped Activities.
+1. Run the Members migration in Supabase if it has not already been applied.
+2. Test Members V1 with real organization data.
+3. Migrate News to organization-scoped data.
+4. Migrate Activities to organization-scoped data.
 5. After July 29, deploy and verify the administrator invitation Edge Function.
 
 ## Completed phase: Owner Dashboard V2
 
 Owner Dashboard V2 is complete for the current product phase and should receive only focused bug fixes.
 
-## User and role architecture
-
-- Owner belongs to Yasaflow and manages all organizations.
-- Administrator belongs to one organization and is not automatically a Member.
-- Member represents an organization-owned membership and may exist independently in several organizations.
-
 ## Administrator Portal status
 
 Completed:
 
-- Separate non-Owner Administrator Portal shell.
-- Responsive dashboard and core module navigation.
-- Supabase authenticated user lookup.
-- Resolution through `organization_admins`.
+- Separate non-Owner Administrator Portal.
+- Organization session resolution through `organization_admins`.
 - Organization identity, logo and status.
-- Refusal of organization data access when no valid administrator relationship exists.
+- Responsive core navigation.
+- Members V1.
+
+## Members V1
+
+Implemented:
+
+- Organization-scoped loading from `organization_memberships`.
+- Related person data from `people`.
+- Search by name, member number, email and phone.
+- Active/inactive filtering.
+- Empty, loading and migration-error states.
+- Create member.
+- Edit member.
+- Member number uniqueness feedback.
+- Member fields: name, member number, email, phone, address, join date, status, internal role and notes.
 
 Current limitations:
 
-- `AppContext.login` still begins with the legacy `admins` profile lookup.
-- The invitation Edge Function is not yet deployed.
-- Members, News and Activities UI are not yet operational.
-
-## Members database foundation
-
-Implemented in:
-
-- `supabase/migrations/20260710_members_foundation.sql`
-- `MEMBERS_FOUNDATION.md`
-
-The foundation contains:
-
-- `people`
-- `organization_memberships`
-- organization-scoped member-number uniqueness
-- active/inactive membership status
-- organization administrator RLS policies
-- strict separation between members and administrators
-
-The migration has not been run automatically. It must be executed in Supabase SQL Editor before the Members UI can use these tables.
+- The migration `supabase/migrations/20260710_members_foundation.sql` must be run in Supabase before the module can store data.
+- Create uses two database writes (`people`, then `organization_memberships`) rather than one database transaction.
+- No delete, QR card, family, group management, attendance, fees or import/export yet.
+- `AppContext.login` still starts with the legacy `admins` profile lookup.
+- `invite-organization-admin` is not deployed yet.
 
 ## Deferred task — after July 29, 2026
 
 - Deploy `invite-organization-admin` to Supabase.
 - Verify invitation email, redirect and password setup.
 - Verify `organization_admins.user_id` and invitation status.
-- Remove the temporary email fallback after verified migration.
 
 ## Active implementation target
 
-After the migration is applied, build the first organization-scoped Members list and create/edit flow.
-
-## Database status
-
-Current onboarding tables:
-
-- `organizations`
-- `organization_admins`
-- `organization_modules`
-- `organization_provisioning_steps`
-
-Members foundation prepared:
-
-- `people`
-- `organization_memberships`
+After Members V1 is tested, migrate News to organization-scoped data and expose it in the Administrator Portal.
 
 ## Architecture guidance
 
-Keep changes small and focused. Never mix Owner, Administrator and Member concepts. Future work must follow `DEVELOPMENT_RULES.md`, `DATABASE_GUIDE.md`, `UI_COMPONENTS.md`, `ADMIN_PORTAL_REVIEW.md` and `MEMBERS_FOUNDATION.md`.
+Keep changes small and focused. Never mix Owner, Administrator and Member concepts. All customer data must be scoped by `organization_id` and protected by RLS.
