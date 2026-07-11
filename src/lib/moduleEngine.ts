@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from './supabase';
+import { DEFAULT_ORGANIZATION_ID } from './organization';
 
 export type ModuleId =
   | 'news'
+  | 'activities'
+  | 'members'
+  | 'administration'
+  | 'settings'
   | 'events'
   | 'calendar'
   | 'contact'
@@ -15,6 +20,7 @@ export type ModuleId =
   | 'ramadan'
   | 'eid'
   | 'kurban'
+  | 'daily_inspiration'
   | 'ayet'
   | 'hadis'
   | 'dua'
@@ -31,7 +37,10 @@ export type ModuleState = Record<string, boolean>;
 
 export const DEFAULT_MODULES: ModuleState = {
   news: true,
-  events: true,
+  activities: true,
+  members: true,
+  administration: true,
+  settings: true,
   contact: true,
   donation: true,
   push: true,
@@ -39,19 +48,19 @@ export const DEFAULT_MODULES: ModuleState = {
   sohbet: true,
   ramadan: true,
   kurban: true,
-  ayet: true,
-  hadis: true,
+  daily_inspiration: false,
+  ayet: false,
+  hadis: false,
 };
 
 export function isModuleEnabled(modules: ModuleState, moduleId: ModuleId, fallback = true) {
   return modules[moduleId] ?? fallback;
 }
 
-export async function loadOrganizationModules(organizationId = 'dtim') {
-  const client = supabase;
-  if (!client) return DEFAULT_MODULES;
+export async function loadOrganizationModules(organizationId = DEFAULT_ORGANIZATION_ID) {
+  if (!supabase) return DEFAULT_MODULES;
 
-  const { data, error } = await client
+  const { data, error } = await supabase
     .from('organization_modules')
     .select('module_id, enabled')
     .eq('organization_id', organizationId);
@@ -62,41 +71,28 @@ export async function loadOrganizationModules(organizationId = 'dtim') {
   }
 
   const modules: ModuleState = { ...DEFAULT_MODULES };
-  for (const row of data || []) {
-    modules[row.module_id] = Boolean(row.enabled);
-  }
-
+  for (const row of data || []) modules[row.module_id] = Boolean(row.enabled);
   return modules;
 }
 
-export function useOrganizationModules(organizationId = 'dtim') {
+export function useOrganizationModules(organizationId = DEFAULT_ORGANIZATION_ID) {
   const [modules, setModules] = useState<ModuleState>(DEFAULT_MODULES);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-
-    async function load() {
-      setLoading(true);
-      const next = await loadOrganizationModules(organizationId);
+    setLoading(true);
+    loadOrganizationModules(organizationId).then((next) => {
       if (!alive) return;
       setModules(next);
       setLoading(false);
-    }
-
-    void load();
-
-    return () => {
-      alive = false;
-    };
+    });
+    return () => { alive = false; };
   }, [organizationId]);
 
-  return useMemo(
-    () => ({
-      modules,
-      loading,
-      enabled: (moduleId: ModuleId, fallback = true) => isModuleEnabled(modules, moduleId, fallback),
-    }),
-    [modules, loading],
-  );
+  return useMemo(() => ({
+    modules,
+    loading,
+    enabled: (moduleId: ModuleId, fallback = true) => isModuleEnabled(modules, moduleId, fallback),
+  }), [modules, loading]);
 }
