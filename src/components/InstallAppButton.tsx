@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
+import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
 import { supabase } from '../lib/supabase';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,7 +9,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const DEFAULT_ORGANIZATION_ID = import.meta.env.VITE_ORGANIZATION_ID || 'org-1783753789529';
+const INSTALL_DISMISSED_KEY = 'yasaflow_install_dismissed';
+const LEGACY_INSTALL_DISMISSED_KEY = 'dtim_install_dismissed';
 
 export function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -53,7 +55,12 @@ export function InstallAppButton() {
     }
 
     try {
-      if (localStorage.getItem('dtim_install_dismissed') === 'true') setDismissed(true);
+      const dismissedValue = localStorage.getItem(INSTALL_DISMISSED_KEY) ?? localStorage.getItem(LEGACY_INSTALL_DISMISSED_KEY);
+      if (dismissedValue === 'true') {
+        setDismissed(true);
+        localStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
+        localStorage.removeItem(LEGACY_INSTALL_DISMISSED_KEY);
+      }
     } catch { /* ignore */ }
 
     const handler = (e: Event) => {
@@ -86,7 +93,7 @@ export function InstallAppButton() {
 
   const handleDismiss = () => {
     setDismissed(true);
-    try { localStorage.setItem('dtim_install_dismissed', 'true'); } catch { /* ignore */ }
+    try { localStorage.setItem(INSTALL_DISMISSED_KEY, 'true'); } catch { /* ignore */ }
   };
 
   if (installed || dismissed || !deferredPrompt) return null;
