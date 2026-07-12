@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getCurrentOrganizationId } from '../lib/organization';
+import { clearStoredAdminSession, getCurrentOrganizationId, readStoredAdminSession, writeStoredAdminSession } from '../lib/organization';
 import { sendPushNotification } from '../lib/pushNotifications';
 import { supabase } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
@@ -25,7 +25,7 @@ const sanitizeAdmin=(admin:any|null)=>{
   return {...safeAdmin,username:safeAdmin.username||safeAdmin.email,auth_user_id:safeAdmin.auth_user_id||safeAdmin.user_id,displayName:safeAdmin.displayName||safeAdmin.display_name||safeAdmin.username||safeAdmin.email};
 };
 
-const getSavedAdmin=()=>{try{const saved=localStorage.getItem('dtim_admin');return saved?sanitizeAdmin(JSON.parse(saved)):null;}catch{return null;}};
+const getSavedAdmin=()=>sanitizeAdmin(readStoredAdminSession());
 
 const mapNews=(row:any)=>({
   id:row.id,title:row.title||'',content:row.content||row.summary||'',category:'Duyuru',date:row.published_at||row.created_at,
@@ -106,11 +106,11 @@ export const AppProvider:React.FC<{children:React.ReactNode}>=({children})=>{
       }else profileError=organizationResult.error||profileError;
     }
     if(!adminProfile){console.error('Admin profile not found:',profileError);await supabase.auth.signOut();return false;}
-    const safeAdmin=sanitizeAdmin(adminProfile);setCurrentAdmin(safeAdmin);setIsAdmin(true);localStorage.setItem('dtim_admin',JSON.stringify(safeAdmin));
+    const safeAdmin=sanitizeAdmin(adminProfile);setCurrentAdmin(safeAdmin);setIsAdmin(true);writeStoredAdminSession(safeAdmin);
     window.dispatchEvent(new Event('yasaflow-organization-changed'));await loadAllData();return true;
   };
 
-  const logout=()=>{if(supabase)void supabase.auth.signOut();localStorage.removeItem('dtim_admin');setIsAdmin(false);setCurrentAdmin(null);};
+  const logout=()=>{if(supabase)void supabase.auth.signOut();clearStoredAdminSession();setIsAdmin(false);setCurrentAdmin(null);};
 
   const addNews=async(item:any)=>{
     if(!supabase)return;const shouldSendPush=item._sendPush===true;
