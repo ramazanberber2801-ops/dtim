@@ -10,6 +10,7 @@ import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
 import { supabase } from './lib/supabase';
 import { useOrganizationModules } from './lib/moduleEngine';
+import { DEFAULT_ORGANIZATION_ID } from './lib/organization';
 import { getTheme } from './lib/themeEngine';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
@@ -105,7 +106,7 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
 function AppContent() {
   const { isAdmin, isInitialized, settings } = useApp();
-  const { enabled } = useOrganizationModules('dtim');
+  const { enabled } = useOrganizationModules(DEFAULT_ORGANIZATION_ID);
   const [page, setPage] = useState<Page>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
@@ -115,14 +116,14 @@ function AppContent() {
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
-  const [themeId, setThemeId] = useState('classic-mosque');
+  const [themeId, setThemeId] = useState('yasaflow-standard');
   const [themeLoaded, setThemeLoaded] = useState(false);
 
   const selectedTheme = getTheme(themeId);
-  const brandPrimary = safeColor(selectedTheme?.tokens.primary || settings?.brandingPrimaryColor, '#C5A880');
-  const brandSecondary = safeColor(selectedTheme?.tokens.secondary || settings?.brandingSecondaryColor, '#2D2A26');
-  const brandBackground = safeColor(selectedTheme?.tokens.background || settings?.brandingBackgroundColor, '#FAF6F0');
-  const brandText = safeColor(selectedTheme?.tokens.text || settings?.brandingTextColor, '#2D2A26');
+  const brandPrimary = safeColor(selectedTheme?.tokens.primary || settings?.brandingPrimaryColor, '#0A8DFF');
+  const brandSecondary = safeColor(selectedTheme?.tokens.secondary || settings?.brandingSecondaryColor, '#071B53');
+  const brandBackground = safeColor(selectedTheme?.tokens.background || settings?.brandingBackgroundColor, '#F4FAFF');
+  const brandText = safeColor(selectedTheme?.tokens.text || settings?.brandingTextColor, '#071B53');
   const brandCard = safeColor(selectedTheme?.tokens.card, '#FFFFFF');
   const brandVars = {
     '--brand-primary': brandPrimary,
@@ -163,7 +164,7 @@ function AppContent() {
     supabase
       .from('organizations')
       .select('theme_id')
-      .eq('id', 'dtim')
+      .eq('id', DEFAULT_ORGANIZATION_ID)
       .single()
       .then(({ data, error }) => {
         if (error) {
@@ -237,6 +238,7 @@ function AppContent() {
       .from('push_messages')
       .select('id, title, body, expires_at')
       .eq('id', messageId)
+      .eq('organization_id', DEFAULT_ORGANIZATION_ID)
       .gt('expires_at', new Date().toISOString())
       .single()
       .then(({ data, error }) => {
@@ -268,9 +270,9 @@ function AppContent() {
 
   if (!isInitialized || !themeLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF6F0', color: '#2D2A26' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F4FAFF', color: '#071B53' }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#C5A880', borderTopColor: 'transparent' }}></div>
+          <div className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0A8DFF', borderTopColor: 'transparent' }}></div>
           <p className="text-xs opacity-50 font-medium">Yükleniyor...</p>
         </div>
       </div>
