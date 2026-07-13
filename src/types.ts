@@ -40,6 +40,7 @@ export interface PrayerData {
   timings: PrayerTimings;
   hijriDate: string;
   gregorianDate: string;
+  timezone?: string;
 }
 
 export interface QuranEntry {
@@ -79,5 +80,3 @@ export interface AdminAccount {
   displayName: string;
   role: 'superadmin' | 'admin';
 }
-
-export type AdminView = 'login' | 'recovery' | 'resetPassword' | 'panel';
