@@ -4,6 +4,7 @@ import { ActivitiesModule } from '../components/ActivitiesModule';
 import { ManualPushModule } from '../components/ManualPushModule';
 import { MembersModule } from '../components/MembersModule';
 import { NewsModule } from '../components/NewsModule';
+import { OrganizationOnboardingChecklist } from '../components/OrganizationOnboardingChecklist';
 import { OrganizationSettingsModule } from '../components/OrganizationSettingsModule';
 import { OrganizationStaffModule } from '../components/OrganizationStaffModule';
 import { useApp } from '../context/AppContext';
@@ -74,6 +75,7 @@ function Dashboard({ organizationId, organizationName, enabled, onNavigate, lock
       <h3 className="font-serif text-xl">Velkommen til {organizationName}</h3>
       <p className="mt-2 text-sm opacity-65">Her ser du en oppdatert oversikt over organisasjonen.</p>
     </section>
+    {!locked&&<OrganizationOnboardingChecklist organizationId={organizationId} onNavigate={onNavigate}/>} 
     {error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">Kunne ikke hente all statistikk: {error}</p>}
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map(({id,label,value,icon:Icon})=><button key={id} disabled={locked} onClick={()=>onNavigate(id)} className="rounded-2xl border p-4 text-left shadow-sm transition enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:mix(brand.primary,12),color:brand.primary}}><Icon size={18}/></div>{loading?<Loader2 size={16} className="animate-spin opacity-50"/>:<span className="font-serif text-2xl">{value}</span>}</div><p className="mt-3 text-sm font-medium">{label}</p></button>)}
