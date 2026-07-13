@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { BookOpen, Loader2, Save, Settings } from 'lucide-react';
+import { notifyOrganizationModulesChanged } from '../lib/moduleEngine';
 import { supabase } from '../lib/supabase';
 
 type FormState = {
@@ -21,32 +22,39 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
   const [error,setError]=useState('');
 
   useEffect(()=>{
+    let cancelled=false;
     (async()=>{
-      if(!supabase)return;
-      setLoading(true);
+      if(!supabase){setLoading(false);return;}
+      setLoading(true);setError('');setMessage('');
       const [settingsResult,moduleResult]=await Promise.all([
         supabase.from('organization_settings').select('*').eq('organization_id',organizationId).maybeSingle(),
         supabase.from('organization_modules').select('enabled').eq('organization_id',organizationId).eq('module_id','daily_inspiration').maybeSingle(),
       ]);
+      if(cancelled)return;
       if(settingsResult.error)setError(settingsResult.error.message);
-      else if(settingsResult.data)setForm({...empty,...settingsResult.data,ramadan_start_date:settingsResult.data.ramadan_start_date||'',ramadan_end_date:settingsResult.data.ramadan_end_date||'',kurban_start_date:settingsResult.data.kurban_start_date||''});
+      else setForm(settingsResult.data?{...empty,...settingsResult.data,ramadan_start_date:settingsResult.data.ramadan_start_date||'',ramadan_end_date:settingsResult.data.ramadan_end_date||'',kurban_start_date:settingsResult.data.kurban_start_date||''}:empty);
       if(moduleResult.error)setError(moduleResult.error.message);
       else setDailyInspiration(Boolean(moduleResult.data?.enabled));
       setLoading(false);
     })();
+    return()=>{cancelled=true;};
   },[organizationId]);
 
   const save=async(e:FormEvent)=>{
     e.preventDefault();
     if(!supabase)return;
     setSaving(true);setError('');setMessage('');
+    const now=new Date().toISOString();
     const [settingsResult,moduleResult]=await Promise.all([
-      supabase.from('organization_settings').upsert({...form,organization_id:organizationId,updated_at:new Date().toISOString()}),
-      supabase.from('organization_modules').upsert({organization_id:organizationId,module_id:'daily_inspiration',enabled:dailyInspiration,status:dailyInspiration?'active':'inactive',updated_at:new Date().toISOString()},{onConflict:'organization_id,module_id'}),
+      supabase.from('organization_settings').upsert({...form,organization_id:organizationId,updated_at:now},{onConflict:'organization_id'}),
+      supabase.from('organization_modules').upsert({organization_id:organizationId,module_id:'daily_inspiration',enabled:dailyInspiration,status:dailyInspiration?'Aktiv':'Av',updated_at:now},{onConflict:'organization_id,module_id'}),
     ]);
     setSaving(false);
     const saveError=settingsResult.error||moduleResult.error;
-    if(saveError)setError(saveError.message);else setMessage('Innstillingene er lagret. Oppdater appen for å se modulendringen.');
+    if(saveError){setError(saveError.message);return;}
+    notifyOrganizationModulesChanged(organizationId);
+    window.dispatchEvent(new CustomEvent('yasaflow-organization-settings-changed',{detail:{organizationId}}));
+    setMessage('Innstillingene er lagret og modulendringen er aktivert.');
   };
 
   const field=(key:keyof FormState,label:string,type='text')=><label className="block"><span className="text-xs font-medium">{label}</span><input type={type} className="mt-1 w-full rounded-xl border p-3 text-sm" value={String(form[key]??'')} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>;
@@ -69,6 +77,6 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
       </div>
     </section>
     {error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}{message&&<p className="rounded-xl bg-green-50 p-3 text-xs text-green-700">{message}</p>}
-    <button disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>}Lagre innstillinger</button>
+    <button disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>}Lagre innstillinger</button>
   </form>;
 }
