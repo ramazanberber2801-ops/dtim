@@ -30,24 +30,9 @@ import { useClock } from '../lib/useClock';
 import { useLocation } from '../lib/useLocation';
 import type { NewsItem, SohbetItem } from '../types';
 
-type NewsWithDbImage = NewsItem & {
-  image_base64?: string;
-  image_base_64?: string;
-  imageBase64?: string;
-};
-
-type SohbetWithDbImage = SohbetItem & {
-  image_base_64?: string;
-  image_base64?: string;
-  imageBase64?: string;
-};
-
-type DailyData = {
-  verse_text?: string;
-  verse_reference?: string;
-  hadith_text?: string;
-  hadith_source?: string;
-};
+type NewsWithDbImage = NewsItem & { image_base64?: string; image_base_64?: string; imageBase64?: string };
+type SohbetWithDbImage = SohbetItem & { image_base_64?: string; image_base64?: string; imageBase64?: string };
+type DailyData = { verse_text?: string; verse_reference?: string; hadith_text?: string; hadith_source?: string };
 
 const brand = {
   primary: 'var(--brand-primary)',
@@ -101,7 +86,8 @@ export function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!dailyInspirationEnabled || !supabase) {
+    const client = supabase;
+    if (!dailyInspirationEnabled || !client) {
       setDailyData(null);
       return;
     }
@@ -110,7 +96,7 @@ export function HomePage() {
     const load = async () => {
       const start = new Date(new Date().getFullYear(), 0, 0);
       const dayOfYear = Math.floor((Date.now() - start.getTime()) / 86400000);
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('inspiration')
         .select('verse_text, verse_reference, hadith_text, hadith_source')
         .eq('day_of_year', dayOfYear)
@@ -147,9 +133,7 @@ export function HomePage() {
   const ramadanStart = settings?.ramadanStartDate ? parseLocalDate(settings.ramadanStartDate) : null;
   const ramadanEnd = settings?.ramadanEndDate ? parseLocalDate(settings.ramadanEndDate) : null;
   const ramadanDay = ramadanStart ? Math.floor((today.getTime() - ramadanStart.getTime()) / 86400000) + 1 : null;
-  const showRamadan = Boolean(
-    ramadanEnabled && settings?.ramadanEnabled && ramadanStart && ramadanEnd && today >= ramadanStart && today <= ramadanEnd && prayerData,
-  );
+  const showRamadan = Boolean(ramadanEnabled && settings?.ramadanEnabled && ramadanStart && ramadanEnd && today >= ramadanStart && today <= ramadanEnd && prayerData);
   const bayramDate = ramadanEnd ? new Date(ramadanEnd.getFullYear(), ramadanEnd.getMonth(), ramadanEnd.getDate() + 1) : null;
   const showBayram = Boolean(ramadanEnabled && settings?.ramadanEnabled && bayramDate && today.getTime() === bayramDate.getTime());
 
@@ -157,17 +141,8 @@ export function HomePage() {
   const kurbanDay = kurbanStart ? Math.floor((today.getTime() - kurbanStart.getTime()) / 86400000) + 1 : null;
   const showKurban = Boolean(kurbanEnabled && settings?.kurbanEnabled && kurbanDay && kurbanDay >= 1 && kurbanDay <= 4);
 
-  const cardStyle = {
-    backgroundColor: 'var(--brand-card)',
-    color: brand.text,
-    borderColor: mix(brand.primary, 18),
-  };
-
-  const darkCardStyle = {
-    backgroundColor: brand.secondary,
-    color: brand.secondaryText,
-    borderColor: mix(brand.primary, 28),
-  };
+  const cardStyle = { backgroundColor: 'var(--brand-card)', color: brand.text, borderColor: mix(brand.primary, 18) };
+  const darkCardStyle = { backgroundColor: brand.secondary, color: brand.secondaryText, borderColor: mix(brand.primary, 28) };
 
   const openActivity = (item: SohbetWithDbImage) => {
     void trackEvent('activity_open', item.id, item.title);
@@ -181,15 +156,11 @@ export function HomePage() {
           {settings?.brandingLogoUrl ? (
             <img src={settings.brandingLogoUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
           ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-bold" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
-              Y
-            </div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-bold" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>Y</div>
           )}
           <div className="min-w-0">
             <h1 className="truncate font-serif text-base leading-tight">{settings?.mosqueName || 'Yasaflow'}</h1>
-            <p className="text-[10px] uppercase tracking-wider" style={{ color: brand.primary }}>
-              {settings?.shortName || 'Organisasjonsplattform'}
-            </p>
+            <p className="text-[10px] uppercase tracking-wider" style={{ color: brand.primary }}>{settings?.shortName || 'Organisasjonsplattform'}</p>
           </div>
         </div>
       </header>
@@ -212,9 +183,7 @@ export function HomePage() {
                   </div>
                   <div className="mt-2 max-h-52 overflow-y-auto">
                     {searchResults.map((result) => (
-                      <button key={result.id} onClick={() => selectCity(result)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-black/5">
-                        <MapPin size={13} /><span className="text-xs">{result.name}{result.country ? `, ${result.country}` : ''}</span>
-                      </button>
+                      <button key={result.id} onClick={() => selectCity(result)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-black/5"><MapPin size={13} /><span className="text-xs">{result.name}{result.country ? `, ${result.country}` : ''}</span></button>
                     ))}
                   </div>
                   <button onClick={resetToAuto} className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-black/5"><Crosshair size={14} />Konumumu kullan</button>
@@ -244,17 +213,9 @@ export function HomePage() {
 
       <InstallAppButton />
 
-      {showRamadan && (
-        <section className="px-4 pt-4"><div className="rounded-xl border-2 p-5" style={darkCardStyle}><h2 className="font-serif text-lg" style={{ color: brand.primary }}>RAMAZAN</h2><p className="mt-2 text-sm">Ramazan'ın {ramadanDay}. günü</p><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border p-4 text-center" style={{ borderColor: mix(brand.primary, 22) }}><p className="text-xs opacity-60">İmsak</p><p className="font-semibold">{prayerData?.timings.Fajr}</p></div><div className="rounded-xl border p-4 text-center" style={{ borderColor: mix(brand.primary, 22) }}><p className="text-xs opacity-60">İftar</p><p className="font-semibold">{prayerData?.timings.Maghrib}</p></div></div></div></section>
-      )}
-
-      {showBayram && (
-        <section className="px-4 pt-4"><div className="rounded-xl border-2 p-6 text-center" style={darkCardStyle}><h2 className="font-serif text-xl" style={{ color: brand.primary }}>BAYRAMINIZ MÜBAREK OLSUN</h2></div></section>
-      )}
-
-      {showKurban && (
-        <section className="px-4 pt-4"><div className="rounded-xl border-2 p-6 text-center" style={darkCardStyle}><h2 className="font-serif text-xl" style={{ color: brand.primary }}>KURBAN BAYRAMI</h2><p className="mt-2 text-sm">{kurbanDay}. gün</p>{todayActivities[0] && <button onClick={() => openActivity(todayActivities[0])} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-medium" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Calendar size={17} />Bugünkü program<ChevronRight size={17} /></button>}</div></section>
-      )}
+      {showRamadan && <section className="px-4 pt-4"><div className="rounded-xl border-2 p-5" style={darkCardStyle}><h2 className="font-serif text-lg" style={{ color: brand.primary }}>RAMAZAN</h2><p className="mt-2 text-sm">Ramazan'ın {ramadanDay}. günü</p><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border p-4 text-center" style={{ borderColor: mix(brand.primary, 22) }}><p className="text-xs opacity-60">İmsak</p><p className="font-semibold">{prayerData?.timings.Fajr}</p></div><div className="rounded-xl border p-4 text-center" style={{ borderColor: mix(brand.primary, 22) }}><p className="text-xs opacity-60">İftar</p><p className="font-semibold">{prayerData?.timings.Maghrib}</p></div></div></div></section>}
+      {showBayram && <section className="px-4 pt-4"><div className="rounded-xl border-2 p-6 text-center" style={darkCardStyle}><h2 className="font-serif text-xl" style={{ color: brand.primary }}>BAYRAMINIZ MÜBAREK OLSUN</h2></div></section>}
+      {showKurban && <section className="px-4 pt-4"><div className="rounded-xl border-2 p-6 text-center" style={darkCardStyle}><h2 className="font-serif text-xl" style={{ color: brand.primary }}>KURBAN BAYRAMI</h2><p className="mt-2 text-sm">{kurbanDay}. gün</p>{todayActivities[0] && <button onClick={() => openActivity(todayActivities[0])} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-medium" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Calendar size={17} />Bugünkü program<ChevronRight size={17} /></button>}</div></section>}
 
       {!modulesLoading && dailyInspirationEnabled && dailyData && (
         <section className="px-4 pt-4">
