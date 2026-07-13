@@ -56,14 +56,30 @@ function saveStoredCity(city: SelectedCity, isAuto: boolean) {
 async function reverseGeocode(latitude: number, longitude: number): Promise<Pick<SelectedCity, 'name' | 'country'> | null> {
   try {
     const response = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=tr&count=1`,
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=tr`,
       { cache: 'no-store' },
+    );
+    if (response.ok) {
+      const data = await response.json();
+      const name = data.city || data.locality || data.principalSubdivision || '';
+      const country = data.countryName || data.countryCode || '';
+      if (name) return { name, country };
+    }
+  } catch {
+    // Try the secondary provider below.
+  }
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=tr`,
+      { cache: 'no-store', headers: { Accept: 'application/json' } },
     );
     if (!response.ok) return null;
     const data = await response.json();
-    const result = data?.results?.[0];
-    if (!result) return null;
-    return { name: result.name || 'Mevcut Konum', country: result.country || '' };
+    const address = data?.address || {};
+    const name = address.city || address.town || address.village || address.municipality || address.county || '';
+    const country = address.country || '';
+    return name ? { name, country } : null;
   } catch {
     return null;
   }
@@ -111,7 +127,6 @@ export function useLocation() {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
-        // Apply fresh coordinates immediately. Prayer times must not wait for city-name lookup.
         const rawCity: SelectedCity = {
           name: 'Mevcut Konum',
           country: '',
