@@ -24,6 +24,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
   if (!open) return null;
 
   const canAccessOwner = isOwnerRole(currentAdmin?.role);
+  const administratorName = currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin';
 
   const handleLogout = () => {
     logout();
@@ -31,40 +32,65 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col" style={{ backgroundColor: brand.background, color: brand.text }}>
-      <header className="px-5 py-4 flex items-center justify-between shrink-0 shadow-md" style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: mix(brand.primary, 22) }}>
-            <ShieldCheck size={18} style={{ color: brand.primary }} />
+    <div className="fixed inset-0 z-[80] flex min-h-0 flex-col overflow-hidden" style={{ backgroundColor: brand.background, color: brand.text }}>
+      <header
+        className="shrink-0 px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-md sm:px-5 sm:py-4"
+        style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}
+      >
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: mix(brand.primary, 22) }}>
+              <ShieldCheck size={18} style={{ color: brand.primary }} />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate font-serif text-base sm:text-lg">Yasaflow administrasjon</h1>
+              <p className="truncate text-[10px] opacity-60">
+                {administratorName} · {canAccessOwner ? 'Owner' : 'Administrator'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-serif text-lg">Yönetim Paneli V2</h1>
-            <p className="text-[10px] opacity-55">
-              {currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin'} · {canAccessOwner ? 'Owner' : 'Administrator'}
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button onClick={handleLogout} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(255,255,255,0.10)', color: brand.secondaryText }}>
-            <LogOut size={14} /> Çıkış
-          </button>
-          <button onClick={onClose} className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
-            <X size={18} style={{ color: brand.secondaryText }} />
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={handleLogout}
+              className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs sm:px-3"
+              style={{ backgroundColor: 'rgba(255,255,255,0.10)', color: brand.secondaryText }}
+              aria-label="Logg ut"
+            >
+              <LogOut size={15} />
+              <span className="hidden sm:inline">Logg ut</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="flex h-9 w-9 items-center justify-center rounded-lg"
+              style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}
+              aria-label="Lukk administrasjonspanelet"
+            >
+              <X size={18} style={{ color: brand.secondaryText }} />
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="flex border-b-2 bg-white shrink-0 overflow-x-auto" style={{ borderColor: mix(brand.primary, 20) }}>
-        <div className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 py-3 text-xs font-medium relative" style={{ color: brand.primary }}>
+      <div className="shrink-0 border-b-2 bg-white" style={{ borderColor: mix(brand.primary, 20) }}>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium" style={{ color: brand.primary }}>
           {canAccessOwner ? <Crown size={15} /> : <Building2 size={15} />}
-          <span>{canAccessOwner ? 'Owner V2' : 'Administratorportal'}</span>
-          <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: brand.primary }} />
+          <span>{canAccessOwner ? 'Owner Panel' : 'Administratorportal'}</span>
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto">
-        {canAccessOwner ? <><OwnerOverview /><OwnerPanelV2 /><OwnerThemeManager /></> : <OrganizationAdminPortal />}
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto w-full max-w-7xl">
+          {canAccessOwner ? (
+            <>
+              <OwnerOverview />
+              <OwnerPanelV2 />
+              <OwnerThemeManager />
+            </>
+          ) : (
+            <OrganizationAdminPortal />
+          )}
+        </div>
       </main>
     </div>
   );
