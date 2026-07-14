@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertCircle, BellRing, Building2, Clock3, LayoutDashboard, Loader2, Newspaper, Settings, ShieldCheck, Users } from 'lucide-react';
+import { Activity, AlertCircle, BellRing, Building2, Clock3, KeyRound, LayoutDashboard, Loader2, Newspaper, Settings, ShieldCheck, Users } from 'lucide-react';
+import { AccessMembershipModule } from '../components/AccessMembershipModule';
 import { ActivitiesModule } from '../components/ActivitiesModule';
 import { ManualPushModule } from '../components/ManualPushModule';
 import { MembersModule } from '../components/MembersModule';
@@ -12,7 +13,7 @@ import { useOrganizationModules } from '../lib/moduleEngine';
 import { resolveOrganizationAdminSession, type OrganizationAdminSession } from '../lib/organizationAdminSession';
 import { supabase } from '../lib/supabase';
 
-type PortalSection = 'dashboard' | 'members' | 'news' | 'activities' | 'notifications' | 'administration' | 'settings';
+type PortalSection = 'dashboard' | 'members' | 'news' | 'activities' | 'notifications' | 'administration' | 'access' | 'settings';
 type DashboardStats = { members:number; news:number; activities:number; staff:number };
 
 const brand = { primary: 'var(--brand-primary)', background: 'var(--brand-background)', text: 'var(--brand-text)', card: 'var(--brand-card)' };
@@ -24,6 +25,7 @@ const allSections = [
   { id: 'activities' as const, label: 'Aktiviteter', icon: Activity, moduleId: 'activities' },
   { id: 'notifications' as const, label: 'Varslinger', icon: BellRing, moduleId: 'push' },
   { id: 'administration' as const, label: 'Styret', icon: ShieldCheck, moduleId: 'administration' },
+  { id: 'access' as const, label: 'Tilgang', icon: KeyRound, moduleId: null },
   { id: 'settings' as const, label: 'Innstillinger', icon: Settings, moduleId: 'settings' },
 ];
 
@@ -71,24 +73,11 @@ function Dashboard({ organizationId, organizationName, enabled, onNavigate, lock
   ].filter((item)=>enabled(item.moduleId,true));
 
   return <div className="space-y-4">
-    <section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}>
-      <h3 className="font-serif text-xl">Velkommen til {organizationName}</h3>
-      <p className="mt-2 text-sm opacity-65">Her ser du en oppdatert oversikt over organisasjonen.</p>
-    </section>
+    <section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><h3 className="font-serif text-xl">Velkommen til {organizationName}</h3><p className="mt-2 text-sm opacity-65">Her ser du en oppdatert oversikt over organisasjonen.</p></section>
     {!locked&&<OrganizationOnboardingChecklist organizationId={organizationId} onNavigate={onNavigate}/>} 
     {error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">Kunne ikke hente all statistikk: {error}</p>}
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map(({id,label,value,icon:Icon})=><button key={id} disabled={locked} onClick={()=>onNavigate(id)} className="rounded-2xl border p-4 text-left shadow-sm transition enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:mix(brand.primary,12),color:brand.primary}}><Icon size={18}/></div>{loading?<Loader2 size={16} className="animate-spin opacity-50"/>:<span className="font-serif text-2xl">{value}</span>}</div><p className="mt-3 text-sm font-medium">{label}</p></button>)}
-    </section>
-    {!locked&&<section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}>
-      <h4 className="font-semibold">Hurtigvalg</h4>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {enabled('news',true)&&<button onClick={()=>onNavigate('news')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Opprett eller rediger nyhet</button>}
-        {enabled('activities',true)&&<button onClick={()=>onNavigate('activities')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Opprett eller rediger aktivitet</button>}
-        {enabled('push',true)&&<button onClick={()=>onNavigate('notifications')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Send push-varsel</button>}
-        {enabled('settings',true)&&<button onClick={()=>onNavigate('settings')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Oppdater organisasjonsinnstillinger</button>}
-      </div>
-    </section>}
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{cards.map(({id,label,value,icon:Icon})=><button key={id} disabled={locked} onClick={()=>onNavigate(id)} className="rounded-2xl border p-4 text-left shadow-sm transition enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:mix(brand.primary,12),color:brand.primary}}><Icon size={18}/></div>{loading?<Loader2 size={16} className="animate-spin opacity-50"/>:<span className="font-serif text-2xl">{value}</span>}</div><p className="mt-3 text-sm font-medium">{label}</p></button>)}</section>
+    {!locked&&<section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><h4 className="font-semibold">Hurtigvalg</h4><div className="mt-3 grid gap-2 sm:grid-cols-2">{enabled('news',true)&&<button onClick={()=>onNavigate('news')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Opprett eller rediger nyhet</button>}{enabled('activities',true)&&<button onClick={()=>onNavigate('activities')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Opprett eller rediger aktivitet</button>}<button onClick={()=>onNavigate('access')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Administrer tilgang og invitasjonskoder</button>{enabled('settings',true)&&<button onClick={()=>onNavigate('settings')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Oppdater organisasjonsinnstillinger</button>}</div></section>}
   </div>;
 }
 
@@ -101,21 +90,16 @@ function PortalWithModules({ session, administratorName }: { session: Organizati
     return !section.moduleId || enabled(section.moduleId, true);
   }), [enabled, trial.expired]);
 
-  useEffect(() => {
-    if (!sections.some((section) => section.id === activeSection)) setActiveSection('dashboard');
-  }, [sections, activeSection]);
-
+  useEffect(() => { if (!sections.some((section) => section.id === activeSection)) setActiveSection('dashboard'); }, [sections, activeSection]);
   if (loading) return <div className="flex min-h-full items-center justify-center p-8"><Loader2 className="animate-spin" size={18} /></div>;
 
   return <div className="min-h-full" style={{ backgroundColor: brand.background, color: brand.text }}>
     <section className="border-b px-4 py-5 sm:px-6" style={{ borderColor: mix(brand.primary, 16) }}><div className="mx-auto flex max-w-6xl items-center gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>{session.organizationLogoUrl ? <img src={session.organizationLogoUrl} alt="" className="h-full w-full object-cover" /> : <Building2 size={22} />}</div><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-[0.18em] opacity-45">Administratorportal</p><h2 className="truncate font-serif text-xl sm:text-2xl">{session.organizationName}</h2><p className="mt-0.5 text-xs opacity-55">Innlogget som {administratorName}{session.organizationStatus ? ` · ${session.organizationStatus}` : ''}</p></div></div></section>
-
     {trial.status==='trial'&&!trial.expired&&<div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6"><div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900"><Clock3 size={19} className="mt-0.5 shrink-0"/><div><p className="text-sm font-semibold">7 dagers gratis prøveperiode</p><p className="mt-1 text-xs leading-5">{trial.daysRemaining} {trial.daysRemaining===1?'dag':'dager'} igjen{trial.endsAt?` · utløper ${trial.endsAt.toLocaleDateString('nb-NO')}`:''}. Ingen betaling gjennomføres før betalingsløsningen er valgt og aktivert.</p></div></div></div>}
     {trial.expired&&<div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6"><div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><AlertCircle size={19} className="mt-0.5 shrink-0"/><div><p className="text-sm font-semibold">Prøveperioden er utløpt</p><p className="mt-1 text-xs leading-5">Dataene er beholdt. Innholdsproduksjon og utsending er midlertidig låst til abonnementet aktiveres.</p></div></div></div>}
-
     <div className="mx-auto grid max-w-6xl gap-4 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <nav className="grid grid-cols-3 gap-2 rounded-2xl border bg-white p-2 shadow-sm sm:grid-cols-7 lg:flex lg:flex-col" style={{ borderColor: mix(brand.primary, 16) }}>{sections.map(({id,label,icon:Icon})=>{const active=activeSection===id;return <button key={id} onClick={()=>setActiveSection(id)} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-medium lg:min-h-0 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3 lg:text-xs" style={{backgroundColor:active?mix(brand.primary,12):'transparent',color:active?brand.primary:brand.text}}><Icon size={17}/><span>{label}</span></button>;})}</nav>
-      <main>{activeSection==='dashboard'?<Dashboard organizationId={session.organizationId} organizationName={session.organizationName} enabled={enabled} onNavigate={setActiveSection} locked={trial.expired}/>:activeSection==='members'?<MembersModule organizationId={session.organizationId}/>:activeSection==='news'?<NewsModule organizationId={session.organizationId}/>:activeSection==='activities'?<ActivitiesModule organizationId={session.organizationId}/>:activeSection==='notifications'?<ManualPushModule organizationId={session.organizationId}/>:activeSection==='administration'?<OrganizationStaffModule organizationId={session.organizationId}/>:<OrganizationSettingsModule organizationId={session.organizationId}/>}</main>
+      <nav className="grid grid-cols-4 gap-2 rounded-2xl border bg-white p-2 shadow-sm sm:grid-cols-8 lg:flex lg:flex-col" style={{ borderColor: mix(brand.primary, 16) }}>{sections.map(({id,label,icon:Icon})=>{const active=activeSection===id;return <button key={id} onClick={()=>setActiveSection(id)} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-medium lg:min-h-0 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3 lg:text-xs" style={{backgroundColor:active?mix(brand.primary,12):'transparent',color:active?brand.primary:brand.text}}><Icon size={17}/><span>{label}</span></button>;})}</nav>
+      <main>{activeSection==='dashboard'?<Dashboard organizationId={session.organizationId} organizationName={session.organizationName} enabled={enabled} onNavigate={setActiveSection} locked={trial.expired}/>:activeSection==='members'?<MembersModule organizationId={session.organizationId}/>:activeSection==='news'?<NewsModule organizationId={session.organizationId}/>:activeSection==='activities'?<ActivitiesModule organizationId={session.organizationId}/>:activeSection==='notifications'?<ManualPushModule organizationId={session.organizationId}/>:activeSection==='administration'?<OrganizationStaffModule organizationId={session.organizationId}/>:activeSection==='access'?<AccessMembershipModule organizationId={session.organizationId}/>:<OrganizationSettingsModule organizationId={session.organizationId}/>}</main>
     </div>
   </div>;
 }
@@ -126,11 +110,7 @@ export function OrganizationAdminPortal() {
   const [sessionError, setSessionError] = useState('');
   const [sessionLoading, setSessionLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    resolveOrganizationAdminSession().then((resolved) => { if (!cancelled) setSession(resolved); }).catch((error) => { if (!cancelled) setSessionError(error instanceof Error ? error.message : 'Kunne ikke hente organisasjonen.'); }).finally(() => { if (!cancelled) setSessionLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  useEffect(() => { let cancelled = false; resolveOrganizationAdminSession().then((resolved) => { if (!cancelled) setSession(resolved); }).catch((error) => { if (!cancelled) setSessionError(error instanceof Error ? error.message : 'Kunne ikke hente organisasjonen.'); }).finally(() => { if (!cancelled) setSessionLoading(false); }); return () => { cancelled = true; }; }, []);
 
   const administratorName = session?.adminDisplayName || currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Administrator';
   if (sessionLoading) return <div className="flex min-h-full items-center justify-center p-8" style={{ backgroundColor: brand.background, color: brand.text }}><div className="flex items-center gap-3 text-sm opacity-65"><Loader2 className="animate-spin" size={18} /> Henter organisasjonen din...</div></div>;
