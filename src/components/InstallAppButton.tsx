@@ -8,8 +8,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const INSTALL_DISMISSED_KEY = 'yasaflow_install_dismissed';
-const LEGACY_INSTALL_DISMISSED_KEY = 'dtim_install_dismissed';
+const INSTALL_DISMISSED_UNTIL_KEY = 'yasaflow_install_dismissed_until_v2';
+const LEGACY_INSTALL_DISMISSED_KEYS = ['yasaflow_install_dismissed', 'dtim_install_dismissed'];
+const DISMISS_DURATION_MS = 24 * 60 * 60 * 1000;
 
 export function InstallAppButton() {
   const { t, direction } = useAppI18n();
@@ -24,12 +25,10 @@ export function InstallAppButton() {
     }
 
     try {
-      const dismissedValue = localStorage.getItem(INSTALL_DISMISSED_KEY) ?? localStorage.getItem(LEGACY_INSTALL_DISMISSED_KEY);
-      if (dismissedValue === 'true') {
-        setDismissed(true);
-        localStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
-        localStorage.removeItem(LEGACY_INSTALL_DISMISSED_KEY);
-      }
+      for (const key of LEGACY_INSTALL_DISMISSED_KEYS) localStorage.removeItem(key);
+      const dismissedUntil = Number(localStorage.getItem(INSTALL_DISMISSED_UNTIL_KEY) || 0);
+      if (dismissedUntil > Date.now()) setDismissed(true);
+      else localStorage.removeItem(INSTALL_DISMISSED_UNTIL_KEY);
     } catch {
       // Ignore unavailable storage.
     }
@@ -65,7 +64,7 @@ export function InstallAppButton() {
   const handleDismiss = () => {
     setDismissed(true);
     try {
-      localStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
+      localStorage.setItem(INSTALL_DISMISSED_UNTIL_KEY, String(Date.now() + DISMISS_DURATION_MS));
     } catch {
       // Ignore unavailable storage.
     }
