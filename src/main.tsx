@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './owner-v2.css';
 import App from './App.tsx';
+import { MemberAccessLauncher } from './components/MemberAccessLauncher';
 import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
 import { AppI18nProvider } from './lib/appI18n';
 import { writeStoredAdminSession } from './lib/organization';
@@ -41,6 +42,7 @@ async function start() {
     <StrictMode>
       <AppI18nProvider>
         <OwnerLanguageSelectorEnhancer />
+        <MemberAccessLauncher />
         <App />
       </AppI18nProvider>
     </StrictMode>,
