@@ -1,9 +1,22 @@
-export const DEFAULT_ORGANIZATION_ID =
-  import.meta.env.VITE_ORGANIZATION_ID || 'org-1783753789529';
-
 export const SELECTED_ORGANIZATION_KEY = 'yasaflow_selected_organization_id';
 export const ADMIN_SESSION_KEY = 'yasaflow_admin';
 export const LEGACY_ADMIN_SESSION_KEY = 'dtim_admin';
+
+function readInitialOrganizationId() {
+  const fallback = import.meta.env.VITE_ORGANIZATION_ID || 'org-1783753789529';
+  try {
+    const fromQuery = new URLSearchParams(window.location.search).get('org');
+    if (fromQuery) {
+      localStorage.setItem(SELECTED_ORGANIZATION_KEY, fromQuery);
+      return fromQuery;
+    }
+    return localStorage.getItem(SELECTED_ORGANIZATION_KEY) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export const DEFAULT_ORGANIZATION_ID = readInitialOrganizationId();
 
 export function readStoredAdminSession<T = Record<string, unknown>>(): T | null {
   try {
