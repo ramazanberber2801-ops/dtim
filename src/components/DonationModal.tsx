@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { HandCoins, X, Copy, Check, Sparkles, ExternalLink, Loader2 } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 import { useApp } from '../context/AppContext';
+import { useAppI18n } from '../lib/appI18n';
 
 interface DonationModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ function cleanVippsDonationUrl(value: unknown) {
 
 export function DonationModal({ open, onClose }: DonationModalProps) {
   const { settings } = useApp();
+  const { t } = useAppI18n();
   const [copied, setCopied] = useState(false);
   const [openingVipps, setOpeningVipps] = useState(false);
   const vippsNumber = settings?.vippsNumber || '29816';
@@ -79,7 +81,7 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            aria-label="Kapat"
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>
@@ -89,46 +91,28 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
               <HandCoins size={28} />
             </div>
 
-            <h2 className="font-serif text-2xl">Camiye Destek Ol</h2>
-            <p className="text-sm opacity-80 mt-1">
-              Bağışlarınız camimizin faaliyetlerine katkı sağlar
-            </p>
+            <h2 className="font-serif text-2xl">{t('donation.title')}</h2>
+            <p className="text-sm opacity-80 mt-1">{t('donation.subtitle')}</p>
           </div>
         </div>
 
         <div className="p-6">
           <div className="theme-card rounded-xl p-5 border-2 shadow-sm text-center">
             <div className="flex items-center justify-center gap-2 mb-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: 'var(--brand-subtle)' }}
-              >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--brand-subtle)' }}>
                 <HandCoins size={18} style={{ color: 'var(--brand-primary)' }} />
               </div>
               <span className="text-sm font-semibold">Vipps</span>
             </div>
 
-            <p className="font-serif text-3xl tabular-nums mb-4">
-              {vippsNumber}
-            </p>
+            <p className="font-serif text-3xl tabular-nums mb-4">{vippsNumber}</p>
 
             <button
               onClick={copyToClipboard}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-              style={{
-                backgroundColor: 'var(--brand-subtle)',
-                color: 'var(--brand-primary)',
-              }}
+              style={{ backgroundColor: 'var(--brand-subtle)', color: 'var(--brand-primary)' }}
             >
-              {copied ? (
-                <>
-                  <Check size={14} /> Kopyalandı
-                </>
-              ) : (
-                <>
-                  <Copy size={14} /> Numarayı Kopyala
-                </>
-              )}
+              {copied ? <><Check size={14} /> {t('donation.copied')}</> : <><Copy size={14} /> {t('donation.copyNumber')}</>}
             </button>
           </div>
 
@@ -140,21 +124,17 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
               className="theme-secondary-panel mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
             >
               {openingVipps ? <Loader2 size={18} className="animate-spin" /> : <ExternalLink size={18} />}
-              {openingVipps ? 'Vipps Açılıyor...' : 'Vipps Uygulamasında Aç'}
+              {openingVipps ? t('donation.openingVipps') : t('donation.openVipps')}
             </button>
           )}
 
           {!vippsButtonEnabled && (
-            <p className="mt-4 text-center text-xs theme-muted">
-              Vipps uygulaması bağlantısı kapalı. Bağış için numarayı kopyalayabilirsiniz.
-            </p>
+            <p className="mt-4 text-center text-xs theme-muted">{t('donation.vippsDisabled')}</p>
           )}
 
           <div className="flex items-start gap-2 text-xs rounded-lg p-3 mt-4 theme-surface">
             <Sparkles size={14} className="shrink-0 mt-0.5" style={{ color: 'var(--brand-primary)' }} />
-            <span>
-              Tüm bağışlar derneğimizin faaliyetleri, etkinlikleri ve sosyal yardım çalışmalarında kullanılır. Allah kabul etsin.
-            </span>
+            <span>{t('donation.note')}</span>
           </div>
         </div>
       </div>
