@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AlertCircle, Edit3, Loader2, Plus, Search, UserRound, X } from 'lucide-react';
+import { MembershipRequestsModule } from './MembershipRequestsModule';
 import { useAppI18n } from '../lib/appI18n';
 import { getMemberTranslation } from '../lib/memberTranslations';
 import { supabase } from '../lib/supabase';
@@ -82,6 +83,7 @@ export function MembersModule({ organizationId }: { organizationId:string }) {
   };
 
   return <div className="space-y-4">
+    <MembershipRequestsModule organizationId={organizationId} onApproved={()=>void loadMembers()}/>
     <section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16),color:brand.text}}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div><p className="text-xs uppercase tracking-[0.18em] opacity-45">{t('members.coreModule')}</p><h3 className="font-serif text-2xl">{t('members.title')}</h3><p className="mt-1 text-sm opacity-60">{members.length} {t('members.registeredSuffix')}</p></div>
