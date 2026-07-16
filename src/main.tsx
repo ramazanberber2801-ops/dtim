@@ -9,7 +9,7 @@ import { OrganizationRegistrationFlow } from './components/OrganizationRegistrat
 import { OrganizationSwitcher } from './components/OrganizationSwitcher';
 import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
 import { AppI18nProvider } from './lib/appI18n';
-import { writeStoredAdminSession } from './lib/organization';
+import { resolveOrganizationFromHostname, writeStoredAdminSession } from './lib/organization';
 import { supabase } from './lib/supabase';
 
 async function restoreWebsiteOnboardingSession() {
@@ -46,6 +46,8 @@ function shouldShowRegistration() {
 
 async function start() {
   await restoreWebsiteOnboardingSession();
+  if (!shouldShowRegistration()) await resolveOrganizationFromHostname();
+
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       {shouldShowRegistration() ? (
