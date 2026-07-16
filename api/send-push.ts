@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = userData.user?.id;
   if (userError || !userId) return res.status(401).json({ error: 'Invalid administrator session' });
 
-  const [{ data: organizationAdmin }, { data: platformAdmin }] = await Promise.all([
+  const [{ data: organizationAdmin }, { data: platformAdmin }, { data: pushModule }] = await Promise.all([
     supabase
       .from('organization_admins')
       .select('id')
@@ -54,10 +54,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('auth_user_id', userId)
       .in('role', ['owner', 'super_admin', 'superadmin'])
       .maybeSingle(),
+    supabase
+      .from('organization_modules')
+      .select('enabled')
+      .eq('organization_id', targetOrganizationId)
+      .eq('module_id', 'push')
+      .maybeSingle(),
   ]);
 
   if (!organizationAdmin && !platformAdmin) {
     return res.status(403).json({ error: 'You do not have access to send notifications for this organization' });
+  }
+
+  if (!pushModule?.enabled) {
+    return res.status(403).json({ error: 'Push notifications are not enabled for this organization' });
   }
 
   webpush.setVapidDetails('mailto:admin@yasaflow.com', vapidPublicKey, vapidPrivateKey);
