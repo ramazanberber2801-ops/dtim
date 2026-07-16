@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { BookOpen, Check, ChevronDown, Languages, Loader2, Save, Search, Settings } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Eye, Languages, Loader2, Save, Search, Settings } from 'lucide-react';
 import { useAppI18n } from '../lib/appI18n';
 import { findLanguage, searchLanguages } from '../lib/languageRegistry';
 import { notifyOrganizationModulesChanged } from '../lib/moduleEngine';
@@ -7,15 +7,16 @@ import { getSettingsTranslation } from '../lib/settingsTranslations';
 import { supabase } from '../lib/supabase';
 
 type FormState = {
-  display_name:string; short_name:string; address:string; map_url:string; phone:string; email:string;
+  display_name:string; short_name:string; address:string; map_url:string; phone:string; email:string; website:string;
   whatsapp_number:string; donation_number:string; donation_url:string; bank_account:string; iban:string;
   opening_hours:string; weekly_event:string; logo_url:string; app_icon_url:string;
+  publish_phone:boolean; publish_email:boolean; publish_address:boolean; publish_website:boolean; publish_opening_hours:boolean;
   ramadan_enabled:boolean; ramadan_start_date:string; ramadan_end_date:string;
   kurban_enabled:boolean; kurban_start_date:string;
   language:string;
 };
 
-const empty:FormState={display_name:'',short_name:'',address:'',map_url:'',phone:'',email:'',whatsapp_number:'',donation_number:'',donation_url:'',bank_account:'',iban:'',opening_hours:'',weekly_event:'',logo_url:'',app_icon_url:'',ramadan_enabled:false,ramadan_start_date:'',ramadan_end_date:'',kurban_enabled:false,kurban_start_date:'',language:'nb'};
+const empty:FormState={display_name:'',short_name:'',address:'',map_url:'',phone:'',email:'',website:'',whatsapp_number:'',donation_number:'',donation_url:'',bank_account:'',iban:'',opening_hours:'',weekly_event:'',logo_url:'',app_icon_url:'',publish_phone:false,publish_email:false,publish_address:false,publish_website:false,publish_opening_hours:false,ramadan_enabled:false,ramadan_start_date:'',ramadan_end_date:'',kurban_enabled:false,kurban_start_date:'',language:'nb'};
 
 export function OrganizationSettingsModule({organizationId}:{organizationId:string}){
   const {language:appLanguage}=useAppI18n();
@@ -75,6 +76,7 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
   };
 
   const field=(key:keyof FormState,label:string,type='text')=><label className="block"><span className="text-xs font-medium">{label}</span><input type={type} className="mt-1 w-full rounded-xl border p-3 text-sm" value={String(form[key]??'')} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>;
+  const publishChoice=(key:'publish_phone'|'publish_email'|'publish_address'|'publish_website'|'publish_opening_hours',label:string,hasValue:boolean)=><label className={`flex items-center justify-between gap-4 rounded-2xl border p-4 ${hasValue?'':'opacity-50'}`}><div><p className="text-sm font-semibold">{label}</p><p className="mt-1 text-xs opacity-55">{hasValue?'Vis dette offentlig i appen.':'Fyll inn feltet først.'}</p></div><input type="checkbox" className="h-5 w-5" disabled={!hasValue} checked={form[key]} onChange={e=>setForm({...form,[key]:e.target.checked})}/></label>;
   if(loading)return <div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div>;
 
   return <form onSubmit={save} className="space-y-4">
@@ -97,7 +99,19 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
       <p className="mt-3 text-xs opacity-50">{t('settings.languageNote')}</p>
     </section>
 
-    <section className="grid gap-4 rounded-3xl border bg-white p-5 shadow-sm sm:grid-cols-2">{field('display_name',t('settings.displayName'))}{field('short_name',t('settings.shortName'))}{field('phone',t('settings.phone'))}{field('email',t('settings.email'),'email')}{field('whatsapp_number',t('settings.whatsapp'))}{field('address',t('settings.address'))}{field('map_url',t('settings.mapUrl'),'url')}{field('logo_url',t('settings.logoUrl'),'url')}{field('app_icon_url',t('settings.appIconUrl'),'url')}{field('donation_number',t('settings.donationNumber'))}{field('donation_url',t('settings.donationUrl'),'url')}{field('bank_account',t('settings.bankAccount'))}{field('iban',t('settings.iban'))}{field('opening_hours',t('settings.openingHours'))}{field('weekly_event',t('settings.weeklyEvent'))}</section>
+    <section className="grid gap-4 rounded-3xl border bg-white p-5 shadow-sm sm:grid-cols-2">{field('display_name',t('settings.displayName'))}{field('short_name',t('settings.shortName'))}{field('phone',t('settings.phone'))}{field('email',t('settings.email'),'email')}{field('website','Nettside','url')}{field('whatsapp_number',t('settings.whatsapp'))}{field('address',t('settings.address'))}{field('map_url',t('settings.mapUrl'),'url')}{field('logo_url',t('settings.logoUrl'),'url')}{field('app_icon_url',t('settings.appIconUrl'),'url')}{field('donation_number',t('settings.donationNumber'))}{field('donation_url',t('settings.donationUrl'),'url')}{field('bank_account',t('settings.bankAccount'))}{field('iban',t('settings.iban'))}{field('opening_hours',t('settings.openingHours'))}{field('weekly_event',t('settings.weeklyEvent'))}</section>
+
+    <section className="rounded-3xl border bg-white p-5 shadow-sm">
+      <div className="flex items-start gap-3"><Eye size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">Offentlige innstillinger</h4><p className="mt-1 text-xs opacity-55">Vis kun det organisasjonen har valgt å publisere.</p></div></div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {publishChoice('publish_phone','Telefon',Boolean(form.phone.trim()))}
+        {publishChoice('publish_email','E-post',Boolean(form.email.trim()))}
+        {publishChoice('publish_address','Adresse',Boolean(form.address.trim()))}
+        {publishChoice('publish_website','Nettside',Boolean(form.website.trim()))}
+        {publishChoice('publish_opening_hours','Åpningstider',Boolean(form.opening_hours.trim()))}
+      </div>
+    </section>
+
     <section className="rounded-3xl border bg-white p-5 shadow-sm">
       <h4 className="font-semibold">{t('settings.optionalModules')}</h4>
       <div className="mt-4 space-y-4">
