@@ -5,6 +5,7 @@ import './owner-v2.css';
 import App from './App.tsx';
 import { MemberAccessLauncher } from './components/MemberAccessLauncher';
 import { OrganizationAccessGate } from './components/OrganizationAccessGate';
+import { OrganizationRegistrationFlow } from './components/OrganizationRegistrationFlow';
 import { OrganizationSwitcher } from './components/OrganizationSwitcher';
 import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
 import { AppI18nProvider } from './lib/appI18n';
@@ -38,16 +39,25 @@ async function restoreWebsiteOnboardingSession() {
   window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
 }
 
+function shouldShowRegistration() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('register') === '1' || params.get('onboarding') === '1' || window.location.pathname === '/registrer';
+}
+
 async function start() {
   await restoreWebsiteOnboardingSession();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <AppI18nProvider>
-        <OwnerLanguageSelectorEnhancer />
-        <OrganizationSwitcher />
-        <MemberAccessLauncher />
-        <OrganizationAccessGate><App /></OrganizationAccessGate>
-      </AppI18nProvider>
+      {shouldShowRegistration() ? (
+        <OrganizationRegistrationFlow />
+      ) : (
+        <AppI18nProvider>
+          <OwnerLanguageSelectorEnhancer />
+          <OrganizationSwitcher />
+          <MemberAccessLauncher />
+          <OrganizationAccessGate><App /></OrganizationAccessGate>
+        </AppI18nProvider>
+      )}
     </StrictMode>,
   );
 }
