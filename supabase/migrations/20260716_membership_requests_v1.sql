@@ -20,7 +20,8 @@ create index if not exists organization_membership_requests_org_status_idx
 
 alter table public.organization_membership_requests enable row level security;
 
-create policy if not exists "organization admins can read membership requests"
+drop policy if exists "organization admins can read membership requests" on public.organization_membership_requests;
+create policy "organization admins can read membership requests"
 on public.organization_membership_requests for select to authenticated
 using (exists (
   select 1 from public.organization_admins a
