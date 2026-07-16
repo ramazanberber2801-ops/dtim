@@ -1,1 +1,1 @@
-export { PublicOrganizationPage as HomePage } from './PublicOrganizationPage';
+export { PublicOrganizationHome as HomePage } from './PublicOrganizationHome';
