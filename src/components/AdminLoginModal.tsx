@@ -3,9 +3,11 @@ import { useApp } from '../context/AppContext';
 import { X, Loader2 } from 'lucide-react';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { supabase } from '../lib/supabase';
+import { useAppI18n } from '../lib/appI18n';
 
 export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { login } = useApp();
+  const { t } = useAppI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -28,7 +30,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
     const success = await login(username, password);
 
     if (!success) {
-      setError('Hatalı giriş!');
+      setError(t('login.invalid'));
       setLoading(false);
       return;
     }
@@ -50,17 +52,17 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
     setError('');
 
     if (newPassword.length < 6) {
-      setError('Yeni şifre en az 6 karakter olmalıdır.');
+      setError(t('recovery.tooShort'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Yeni şifreler eşleşmiyor.');
+      setError(t('recovery.noMatch'));
       return;
     }
 
     if (!supabase) {
-      setError('Sistem bağlantısı yok.');
+      setError(t('recovery.noConnection'));
       return;
     }
 
@@ -80,7 +82,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
     setChangingPassword(false);
 
     if (updateError) {
-      setError('Şifre güncellenemedi: ' + updateError.message);
+      setError(t('login.passwordUpdateFailed') + updateError.message);
       return;
     }
 
@@ -96,16 +98,17 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary) 60%, transparent)' }}>
         <div className="theme-surface w-full max-w-sm rounded-2xl p-6 shadow-2xl border-2">
           <div className="flex justify-between mb-6">
-            <h2 className="font-serif text-xl">{mustChangePassword ? 'Yeni Şifre Belirle' : 'Yönetici Girişi'}</h2>
-            <button onClick={onClose}><X size={20} /></button>
+            <h2 className="font-serif text-xl">{mustChangePassword ? t('recovery.title') : t('login.title')}</h2>
+            <button onClick={onClose} aria-label={t('common.close')}><X size={20} /></button>
           </div>
 
           {!mustChangePassword ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="text-red-500 text-xs">{error}</p>}
               <input
+                type="email"
                 className="theme-input w-full p-3 border rounded-xl"
-                placeholder="E-posta"
+                placeholder={t('login.email')}
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 required
@@ -113,33 +116,27 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
               <input
                 type={showPassword ? 'text' : 'password'}
                 className="theme-input w-full p-3 border rounded-xl"
-                placeholder="Şifre"
+                placeholder={t('login.password')}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
               />
               <label className="flex items-center gap-2 text-xs theme-muted">
-                <input
-                  type="checkbox"
-                  checked={showPassword}
-                  onChange={e => setShowPassword(e.target.checked)}
-                />
-                Şifreyi göster
+                <input type="checkbox" checked={showPassword} onChange={e => setShowPassword(e.target.checked)} />
+                {t('recovery.show')}
               </label>
               <button type="submit" className="theme-primary-button w-full p-3 rounded-xl font-medium disabled:opacity-60" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Giriş Yap'}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('login.submit')}
               </button>
             </form>
           ) : (
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <p className="text-xs theme-muted">
-                Geçici şifre ile giriş yaptınız. Devam etmeden önce kalıcı bir şifre belirlemelisiniz.
-              </p>
+              <p className="text-xs theme-muted">{t('login.temporaryPassword')}</p>
               {error && <p className="text-red-500 text-xs">{error}</p>}
               <input
                 type={showNewPassword ? 'text' : 'password'}
                 className="theme-input w-full p-3 border rounded-xl"
-                placeholder="Yeni şifre"
+                placeholder={t('recovery.password')}
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 required
@@ -147,38 +144,30 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
               <input
                 type={showNewPassword ? 'text' : 'password'}
                 className="theme-input w-full p-3 border rounded-xl"
-                placeholder="Yeni şifre tekrar"
+                placeholder={t('recovery.repeat')}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 required
               />
               <label className="flex items-center gap-2 text-xs theme-muted">
-                <input
-                  type="checkbox"
-                  checked={showNewPassword}
-                  onChange={e => setShowNewPassword(e.target.checked)}
-                />
-                Şifreleri göster
+                <input type="checkbox" checked={showNewPassword} onChange={e => setShowNewPassword(e.target.checked)} />
+                {t('login.showPasswords')}
               </label>
               <button type="submit" className="theme-primary-button w-full p-3 rounded-xl font-medium disabled:opacity-60" disabled={changingPassword}>
-                {changingPassword ? <Loader2 className="animate-spin mx-auto" /> : 'Yeni Şifreyi Kaydet'}
+                {changingPassword ? <Loader2 className="animate-spin mx-auto" /> : t('login.savePassword')}
               </button>
             </form>
           )}
 
           {!mustChangePassword && (
             <button onClick={() => setShowForgot(true)} className="w-full text-xs mt-4 hover:underline" style={{ color: 'var(--brand-primary)' }}>
-              Şifremi Unuttum?
+              {t('login.forgotPassword')}
             </button>
           )}
         </div>
       </div>
 
-      <ForgotPasswordModal
-        open={showForgot}
-        initialUsername={username}
-        onClose={() => setShowForgot(false)}
-      />
+      <ForgotPasswordModal open={showForgot} initialUsername={username} onClose={() => setShowForgot(false)} />
     </>
   );
 };
