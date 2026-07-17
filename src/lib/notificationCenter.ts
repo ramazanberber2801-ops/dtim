@@ -50,3 +50,25 @@ export async function loadActivePushMessages(organizationId: string) {
   clearExpiredReadIds(messages.map((message) => message.id));
   return messages;
 }
+
+export function subscribeToPushMessages(organizationId: string, onChange: () => void) {
+  if (!supabase) return () => {};
+
+  const channel = supabase
+    .channel(`push-messages:${organizationId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'push_messages',
+        filter: `organization_id=eq.${organizationId}`,
+      },
+      () => onChange(),
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}
