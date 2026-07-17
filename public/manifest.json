@@ -1,11 +1,11 @@
 {
-  "name": "Drammen Türk İnanç Cemiyeti",
-  "short_name": "DTIM",
-  "description": "Norveç Drammen Türk İnanç ve Kültür Derneği",
+  "name": "Yasaflow",
+  "short_name": "Yasaflow",
+  "description": "Organisasjonsapp for informasjon, aktiviteter, nyheter og kontakt.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF6F0",
-  "theme_color": "#2D2A26",
+  "background_color": "#F4FAFF",
+  "theme_color": "#0A8DFF",
   "orientation": "portrait",
   "icons": [
     {
