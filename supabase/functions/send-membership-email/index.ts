@@ -27,9 +27,10 @@ Deno.serve(async(req)=>{
     }else throw new Error('jobId or requestId/eventType required');
     if(job.status==='sent')return new Response(JSON.stringify({ok:true,alreadySent:true}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
     await admin.from('membership_email_jobs').update({status:'processing',attempts:(job.attempts||0)+1,last_error:null}).eq('id',job.id);
-    const {data:request,error:requestError}=await admin.from('organization_membership_requests').select('*, organization_settings!inner(display_name,short_name,membership_welcome_message,email)').eq('id',job.request_id).single();
+    const {data:request,error:requestError}=await admin.from('organization_membership_requests').select('*').eq('id',job.request_id).single();
     if(requestError)throw requestError;
-    const settings=Array.isArray(request.organization_settings)?request.organization_settings[0]:request.organization_settings;
+    const {data:settings,error:settingsError}=await admin.from('organization_settings').select('display_name,short_name,membership_welcome_message,email').eq('organization_id',request.organization_id).maybeSingle();
+    if(settingsError)throw settingsError;
     const organizationName=settings?.display_name||settings?.short_name||'Yasaflow';
     const name=`${request.first_name} ${request.last_name}`.trim();
     const subjects={received:`Vi har mottatt medlemsforespørselen din – ${organizationName}`,approved:`Medlemskapet ditt er godkjent – ${organizationName}`,rejected:`Oppdatering om medlemsforespørselen din – ${organizationName}`};
@@ -47,11 +48,6 @@ Deno.serve(async(req)=>{
     return new Response(JSON.stringify({ok:true,id:result.id}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
   }catch(error){
     const message=error instanceof Error?error.message:String(error);
-    try{
-      const body=await req.clone().json() as Payload;
-      const supabaseUrl=Deno.env.get('SUPABASE_URL');const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      if(supabaseUrl&&serviceKey&&body.jobId){const admin=createClient(supabaseUrl,serviceKey);await admin.from('membership_email_jobs').update({status:'failed',last_error:message}).eq('id',body.jobId);}
-    }catch{}
     return new Response(JSON.stringify({ok:false,error:message}),{status:400,headers:{...corsHeaders,'Content-Type':'application/json'}});
   }
 });
