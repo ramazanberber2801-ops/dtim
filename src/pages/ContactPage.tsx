@@ -12,6 +12,13 @@ import type { StaffMember } from '../types';
 
 const brand = { primary:'var(--brand-primary)', secondary:'var(--brand-secondary)', background:'var(--brand-background)', text:'var(--brand-text)', primaryText:'var(--brand-primary-text)', secondaryText:'var(--brand-secondary-text)' };
 const mix=(color:string,amount:number,fallback='transparent')=>`color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
+const detailLabels:Record<string,{phone:string;email:string;website:string;opening:string}>={
+  nb:{phone:'Telefon',email:'E-post',website:'Nettside',opening:'Åpningstider'},
+  en:{phone:'Phone',email:'Email',website:'Website',opening:'Opening hours'},
+  tr:{phone:'Telefon',email:'E-posta',website:'Web sitesi',opening:'Çalışma saatleri'},
+  ar:{phone:'الهاتف',email:'البريد الإلكتروني',website:'الموقع الإلكتروني',opening:'ساعات العمل'},
+  ur:{phone:'فون',email:'ای میل',website:'ویب سائٹ',opening:'اوقات کار'},
+};
 
 type PublicSettings={
   phone:string; email:string; address:string; website:string; opening_hours:string; map_url:string;
@@ -30,6 +37,7 @@ export function ContactPage(){
   const [selectedMember,setSelectedMember]=useState<StaffMember|null>(null);
   const [publicSettings,setPublicSettings]=useState<PublicSettings>(emptyPublicSettings);
   const notificationText=getNotificationTranslations(language);
+  const labels=detailLabels[language]||detailLabels.en;
 
   useEffect(()=>{void trackEvent('contact_click','page',t('contact.title'));},[t]);
   useEffect(()=>{if(!pushEnabled)return;(async()=>{if(!('serviceWorker' in navigator))return;const registration=await navigator.serviceWorker.getRegistration('/sw.js');setNotificationsEnabled(Boolean(await registration?.pushManager.getSubscription()));})();},[pushEnabled]);
@@ -38,7 +46,7 @@ export function ContactPage(){
     if(!supabase)return;
     supabase.from('organization_settings').select('phone,email,address,website,opening_hours,map_url,publish_phone,publish_email,publish_address,publish_website,publish_opening_hours').eq('organization_id','dtim').maybeSingle().then(({data,error})=>{
       if(cancelled)return;
-      if(error){console.error('Kunne ikke hente offentlige innstillinger:',error.message);return;}
+      if(error){console.error('Could not load public settings:',error.message);return;}
       if(data)setPublicSettings({...emptyPublicSettings,...data});
     });
     return()=>{cancelled=true;};
@@ -48,10 +56,10 @@ export function ContactPage(){
   const disableNotifications=async()=>{setNotificationLoading(true);try{const registration=await navigator.serviceWorker.getRegistration('/sw.js');const subscription=await registration?.pushManager.getSubscription();if(subscription){const endpoint=subscription.endpoint;await subscription.unsubscribe();await supabase?.from('push_subscriptions').delete().eq('endpoint',endpoint);}setNotificationsEnabled(false);alert(notificationText.disabledSuccess);}catch{alert(notificationText.disabledError);}finally{setNotificationLoading(false);}};
   const lightCardStyle={backgroundColor:'var(--brand-card)',color:'var(--brand-card-text)',borderColor:'var(--brand-border)'};
   const visibleItems=[
-    publicSettings.publish_phone&&publicSettings.phone?{key:'phone',label:'Telefon',value:publicSettings.phone,href:`tel:${publicSettings.phone}`,icon:Phone}:null,
-    publicSettings.publish_email&&publicSettings.email?{key:'email',label:'E-post',value:publicSettings.email,href:`mailto:${publicSettings.email}`,icon:Mail}:null,
-    publicSettings.publish_website&&publicSettings.website?{key:'website',label:'Nettside',value:publicSettings.website,href:publicSettings.website.startsWith('http')?publicSettings.website:`https://${publicSettings.website}`,icon:Globe2}:null,
-    publicSettings.publish_opening_hours&&publicSettings.opening_hours?{key:'opening',label:'Åpningstider',value:publicSettings.opening_hours,href:'',icon:Clock3}:null,
+    publicSettings.publish_phone&&publicSettings.phone?{key:'phone',label:labels.phone,value:publicSettings.phone,href:`tel:${publicSettings.phone}`,icon:Phone}:null,
+    publicSettings.publish_email&&publicSettings.email?{key:'email',label:labels.email,value:publicSettings.email,href:`mailto:${publicSettings.email}`,icon:Mail}:null,
+    publicSettings.publish_website&&publicSettings.website?{key:'website',label:labels.website,value:publicSettings.website,href:publicSettings.website.startsWith('http')?publicSettings.website:`https://${publicSettings.website}`,icon:Globe2}:null,
+    publicSettings.publish_opening_hours&&publicSettings.opening_hours?{key:'opening',label:labels.opening,value:publicSettings.opening_hours,href:'',icon:Clock3}:null,
   ].filter(Boolean) as Array<{key:string;label:string;value:string;href:string;icon:typeof Phone}>;
 
   return <div className="min-h-screen pb-28" dir={direction} style={{backgroundColor:brand.background,color:brand.text}}>
