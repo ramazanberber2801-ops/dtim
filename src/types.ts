@@ -1,4 +1,4 @@
-export type Page = 'home' | 'activities' | 'calendar' | 'more' | 'contact';
+export type Page = 'home' | 'activities' | 'calendar' | 'more' | 'contact' | 'notifications';
 
 export interface NewsItem {
   id: string;
