@@ -50,3 +50,7 @@ export function getMorePageCopy(language: string): MorePageCopy {
 export function getCalendarCopy(language: string): CalendarCopy {
   return calendar[normalizeLanguage(language)];
 }
+
+export function getActivitiesTitle(language: string): string {
+  return bottomNav[normalizeLanguage(language)].activities;
+}
