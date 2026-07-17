@@ -1,4 +1,4 @@
-export type Page = 'home' | 'contact';
+export type Page = 'home' | 'activities' | 'calendar' | 'more' | 'contact';
 
 export interface NewsItem {
   id: string;
@@ -34,56 +34,9 @@ export interface SohbetItem {
   imageBase64?: string;
 }
 
-export interface PrayerTimings {
-  Fajr: string;
-  Sunrise: string;
-  Dhuhr: string;
-  Asr: string;
-  Maghrib: string;
-  Isha: string;
-}
-
-export interface PrayerData {
-  timings: PrayerTimings;
-  hijriDate: string;
-  gregorianDate: string;
-  timezone?: string;
-}
-
-export interface QuranEntry {
-  arabic: string;
-  turkish: string;
-  reference: string;
-  type: 'verse' | 'hadith';
-}
-
-export interface DailyInspiration {
-  verseText: string;
-  verseReference: string;
-  hadithText: string;
-  hadithSource: string;
-  published: boolean;
-}
-
-export interface MosqueSettings {
-  mosqueName: string;
-  shortName: string;
-  vippsNumber: string;
-  address: string;
-  mapUrl: string;
-  phone: string;
-  email: string;
-  whatsappNumber: string;
-  bankAccount: string;
-  iban: string;
-  openingHours: string;
-  fridayPrayer: string;
-}
-
-export interface AdminAccount {
-  id: string;
-  username: string;
-  password: string;
-  displayName: string;
-  role: 'superadmin' | 'admin';
-}
+export interface PrayerTimings { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string; }
+export interface PrayerData { timings: PrayerTimings; hijriDate: string; gregorianDate: string; timezone?: string; }
+export interface QuranEntry { arabic: string; turkish: string; reference: string; type: 'verse' | 'hadith'; }
+export interface DailyInspiration { verseText: string; verseReference: string; hadithText: string; hadithSource: string; published: boolean; }
+export interface MosqueSettings { mosqueName: string; shortName: string; vippsNumber: string; address: string; mapUrl: string; phone: string; email: string; whatsappNumber: string; bankAccount: string; iban: string; openingHours: string; fridayPrayer: string; }
+export interface AdminAccount { id: string; username: string; password: string; displayName: string; role: 'superadmin' | 'admin'; }
