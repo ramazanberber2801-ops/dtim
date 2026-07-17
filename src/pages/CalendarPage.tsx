@@ -15,12 +15,13 @@ type Activity = {
   category: string | null;
 };
 
-const copy: Record<string, { title: string; empty: string; today: string; activities: string }> = {
-  nb: { title: 'Kalender', empty: 'Ingen aktiviteter denne dagen.', today: 'I dag', activities: 'Aktiviteter' },
-  en: { title: 'Calendar', empty: 'No activities on this day.', today: 'Today', activities: 'Activities' },
-  tr: { title: 'Takvim', empty: 'Bu gün için etkinlik yok.', today: 'Bugün', activities: 'Etkinlikler' },
-  ar: { title: 'التقويم', empty: 'لا توجد أنشطة في هذا اليوم.', today: 'اليوم', activities: 'الأنشطة' },
-  ur: { title: 'کیلنڈر', empty: 'اس دن کوئی سرگرمی نہیں ہے۔', today: 'آج', activities: 'سرگرمیاں' },
+type CalendarCopy = { title: string; empty: string; today: string; activities: string; previousMonth: string; nextMonth: string; eventCount: (count:number) => string };
+const copy: Record<string, CalendarCopy> = {
+  nb: { title: 'Kalender', empty: 'Ingen aktiviteter denne dagen.', today: 'I dag', activities: 'Aktiviteter', previousMonth: 'Forrige måned', nextMonth: 'Neste måned', eventCount: count => `${count} aktiviteter` },
+  en: { title: 'Calendar', empty: 'No activities on this day.', today: 'Today', activities: 'Activities', previousMonth: 'Previous month', nextMonth: 'Next month', eventCount: count => `${count} activities` },
+  tr: { title: 'Takvim', empty: 'Bu gün için etkinlik yok.', today: 'Bugün', activities: 'Etkinlikler', previousMonth: 'Önceki ay', nextMonth: 'Sonraki ay', eventCount: count => `${count} etkinlik` },
+  ar: { title: 'التقويم', empty: 'لا توجد أنشطة في هذا اليوم.', today: 'اليوم', activities: 'الأنشطة', previousMonth: 'الشهر السابق', nextMonth: 'الشهر التالي', eventCount: count => `${count} أنشطة` },
+  ur: { title: 'کیلنڈر', empty: 'اس دن کوئی سرگرمی نہیں ہے۔', today: 'آج', activities: 'سرگرمیاں', previousMonth: 'پچھلا مہینہ', nextMonth: 'اگلا مہینہ', eventCount: count => `${count} سرگرمیاں` },
 };
 
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -110,9 +111,9 @@ export function CalendarPage() {
     <main className="mx-auto max-w-4xl space-y-5 px-4 py-5">
       <section className="rounded-3xl border p-4 shadow-sm sm:p-5" style={{ background: 'var(--brand-card)', borderColor: 'var(--brand-border)' }}>
         <div className="flex items-center justify-between gap-3">
-          <button onClick={() => moveMonth(-1)} className="grid h-10 w-10 place-items-center rounded-xl border" style={{ borderColor: 'var(--brand-border)' }} aria-label="Forrige måned"><ChevronLeft size={20} /></button>
+          <button onClick={() => moveMonth(-1)} className="grid h-10 w-10 place-items-center rounded-xl border" style={{ borderColor: 'var(--brand-border)' }} aria-label={text.previousMonth}><ChevronLeft size={20} /></button>
           <button onClick={goToday} className="min-w-0 text-center"><h2 className="truncate text-xl font-semibold capitalize">{monthLabel}</h2><span className="text-xs font-medium" style={{ color: 'var(--brand-primary)' }}>{text.today}</span></button>
-          <button onClick={() => moveMonth(1)} className="grid h-10 w-10 place-items-center rounded-xl border" style={{ borderColor: 'var(--brand-border)' }} aria-label="Neste måned"><ChevronRight size={20} /></button>
+          <button onClick={() => moveMonth(1)} className="grid h-10 w-10 place-items-center rounded-xl border" style={{ borderColor: 'var(--brand-border)' }} aria-label={text.nextMonth}><ChevronRight size={20} /></button>
         </div>
 
         <div className="mt-5 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase opacity-45">{weekdayLabels.map(label => <div key={label} className="py-2">{label}</div>)}</div>
@@ -125,7 +126,7 @@ export function CalendarPage() {
             const count = eventsByDate[key]?.length || 0;
             return <button key={key} onClick={() => { setSelectedDate(key); if (!inMonth) setMonth(new Date(date.getFullYear(), date.getMonth(), 1)); }} className="relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-2xl text-sm font-medium transition" style={{ background: selected ? 'var(--brand-primary)' : isToday ? 'var(--brand-subtle)' : 'transparent', color: selected ? 'var(--brand-primary-text)' : inMonth ? 'var(--brand-text)' : 'var(--brand-muted-text)' }}>
               <span>{date.getDate()}</span>
-              {count > 0 && <span className="mt-1 flex gap-0.5" aria-label={`${count} aktiviteter`}>{Array.from({ length: Math.min(count, 3) }, (_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full" style={{ background: selected ? 'var(--brand-primary-text)' : 'var(--brand-primary)' }} />)}</span>}
+              {count > 0 && <span className="mt-1 flex gap-0.5" aria-label={text.eventCount(count)}>{Array.from({ length: Math.min(count, 3) }, (_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full" style={{ background: selected ? 'var(--brand-primary-text)' : 'var(--brand-primary)' }} />)}</span>}
             </button>;
           })}
         </div>
