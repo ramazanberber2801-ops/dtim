@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { detectBrowser, isInstalled, type BrowserType, type Platform } from '../lib/browserDetect';
+import { useAppI18n } from '../lib/appI18n';
 import { usePWAInstall } from '../lib/usePWAInstall';
 
 interface InstallButtonProps {
@@ -23,6 +24,7 @@ const mix = (color: string, amount: number, fallback = 'transparent') =>
  * - Dismissible by user (remembers dismissal in sessionStorage)
  */
 export function InstallButton({ onShowGuide }: InstallButtonProps) {
+  const { t } = useAppI18n();
   const { canInstall, promptInstall } = usePWAInstall();
   const [browserInfo, setBrowserInfo] = useState(() => detectBrowser());
   const [installed, setInstalled] = useState(() => isInstalled());
@@ -76,14 +78,14 @@ export function InstallButton({ onShowGuide }: InstallButtonProps) {
             <Download size={16} style={{ color: brand.primary }} />
           )}
           <span className="text-xs font-semibold">
-            {installing ? 'Yükleniyor...' : 'Uygulamayı Yükle'}
+            {installing ? t('common.loading') : t('install.button')}
           </span>
         </button>
         <button
           onClick={handleDismiss}
           className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-colors"
           style={{ backgroundColor: 'var(--brand-subtle)', color: mix(brand.text, 55) }}
-          aria-label="Kapat"
+          aria-label={t('install.close')}
         >
           <X size={12} />
         </button>
