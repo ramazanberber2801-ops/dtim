@@ -4,7 +4,7 @@ Last updated: July 17, 2026
 
 ## One-line summary
 
-Yasaflow now has an organization-scoped, multilingual Administrator Portal and public organization delivery with membership registration V2. Real administrator invitation and complete end-to-end testing remain deferred until the Supabase Edge Function is deployed after July 29, 2026.
+Yasaflow now has an organization-scoped, multilingual Administrator Portal and public organization delivery with membership registration V2. Membership V1/V2 database migrations and the secure `send-membership-email` Edge Function are deployed in Supabase. Resend secrets and final delivery testing remain.
 
 ## Current phase
 
@@ -12,7 +12,7 @@ Customer Administrator Portal quality assurance and public organization delivery
 
 Current priority order:
 
-1. Deploy and verify membership request migrations and the `send-membership-email` Edge Function.
+1. Configure `RESEND_API_KEY` and `MEMBERSHIP_FROM_EMAIL`, then verify received, approved and rejected membership emails.
 2. Verify all administrator modules end to end with a real invited organization administrator after July 29.
 3. Run a mobile and RTL quality pass for Arabic and Urdu.
 4. Review remaining public or legacy components before beta release.
@@ -24,6 +24,9 @@ Current priority order:
 - Administrator-to-organization resolution.
 - Members database foundation and Members V1 UI.
 - Public membership registration V1 and V2 code.
+- Membership V1 and V2 migrations deployed to Supabase.
+- Secure membership email dispatch RPCs deployed.
+- `send-membership-email` Edge Function deployed and active.
 - Membership request approval and rejection history.
 - Membership request search and status filtering.
 - Configurable membership welcome message.
@@ -62,7 +65,7 @@ Current limitations:
 - Arabic and Urdu direction is enabled globally, but every mobile layout still needs visual RTL verification.
 - Supabase and browser-generated error messages can remain in their original technical language.
 - New membership form setting labels still require full localization in all supported languages.
-- Membership email delivery requires the V2 migration, deployed `send-membership-email`, `RESEND_API_KEY`, and `MEMBERSHIP_FROM_EMAIL`.
+- Membership email delivery still requires Supabase secrets `RESEND_API_KEY` and `MEMBERSHIP_FROM_EMAIL` plus end-to-end testing.
 
 ## Organization-scoped modules
 
@@ -89,7 +92,7 @@ Implemented:
 
 ## Active implementation target
 
-Deploy and verify membership registration V2, then proceed to organization-scoped event registration improvements.
+Configure Resend secrets and verify membership email delivery, then proceed to organization-scoped event registration improvements.
 
 ## Architecture guidance
 
