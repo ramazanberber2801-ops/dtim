@@ -1,50 +1,14 @@
-import { Home, HandCoins, Phone } from 'lucide-react';
-import { SecretTapDetector } from './SecretTapDetector';
-import { useAppI18n } from '../lib/appI18n';
+import { CalendarDays, CalendarRange, Home, Menu } from 'lucide-react';
 import type { Page } from '../types';
 
-interface BottomNavProps {
-  current: Page;
-  onNavigate: (page: Page) => void;
-  onDonate: () => void;
-  onSecretTrigger: () => void;
-  showDonation?: boolean;
-  showContact?: boolean;
-}
+interface BottomNavProps { current: Page; onNavigate: (page: Page) => void; }
 
-export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, showDonation = true, showContact = true }: BottomNavProps) {
-  const { t } = useAppI18n();
-  const inactiveColor = 'color-mix(in srgb, var(--brand-text) 58%, transparent)';
-  const activeColor = 'var(--brand-primary)';
-  const navBackground = 'color-mix(in srgb, var(--brand-background) 96%, white 4%)';
-  const navBorder = 'color-mix(in srgb, var(--brand-primary) 26%, var(--brand-text) 8%)';
-  const itemColor = (page: Page) => (current === page ? activeColor : inactiveColor);
-
-  return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-md" style={{ backgroundColor: navBackground, borderColor: navBorder }} aria-label="Hovedmeny">
-      <div className="relative mx-auto max-w-md px-3" style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
-        <div className="grid h-[76px] grid-cols-3 items-end">
-          <button type="button" onClick={() => onNavigate('home')} className="flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 transition-colors">
-            <Home size={24} style={{ color: itemColor('home') }} strokeWidth={current === 'home' ? 2.5 : 2} />
-            <span className="text-[11px] font-semibold leading-none" style={{ color: itemColor('home') }}>{t('nav.home')}</span>
-          </button>
-
-          <div className="relative flex h-[76px] min-w-0 flex-col items-center justify-end">
-            {showDonation && <>
-              <button type="button" onClick={onDonate} className="absolute -top-7 flex h-[68px] w-[68px] items-center justify-center rounded-full border-4 shadow-lg transition-transform hover:scale-105 active:scale-95" style={{ background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 76%, #000 24%))', boxShadow: '0 8px 18px color-mix(in srgb, var(--brand-primary) 28%, transparent)', borderColor: navBackground }} aria-label={t('nav.donation')}>
-                <HandCoins size={27} style={{ color: 'var(--brand-primary-text)' }} />
-              </button>
-              <span className="mb-[7px] text-[11px] font-semibold leading-none" style={{ color: activeColor }}>{t('nav.donation')}</span>
-            </>}
-          </div>
-
-          {showContact ? <button type="button" onClick={() => onNavigate('contact')} className="flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 transition-colors">
-            <Phone size={24} style={{ color: itemColor('contact') }} strokeWidth={current === 'contact' ? 2.5 : 2} />
-            <span className="text-[11px] font-semibold leading-none" style={{ color: itemColor('contact') }}>{t('nav.contact')}</span>
-          </button> : <div />}
-        </div>
-        <div className="absolute bottom-2 right-2"><SecretTapDetector onTrigger={onSecretTrigger} /></div>
-      </div>
-    </nav>
-  );
+export function BottomNav({ current, onNavigate }: BottomNavProps) {
+  const items: { page: Page; label: string; icon: typeof Home }[] = [
+    { page: 'home', label: 'Hjem', icon: Home },
+    { page: 'activities', label: 'Aktiviteter', icon: CalendarRange },
+    { page: 'calendar', label: 'Kalender', icon: CalendarDays },
+    { page: 'more', label: 'Mer', icon: Menu },
+  ];
+  return <nav className="fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-md" style={{background:'color-mix(in srgb, var(--brand-background) 96%, white 4%)',borderColor:'var(--brand-border)'}} aria-label="Hovedmeny"><div className="mx-auto grid h-[76px] max-w-md grid-cols-4 px-2" style={{paddingBottom:'max(8px, env(safe-area-inset-bottom))'}}>{items.map(({page,label,icon:Icon})=>{const active=current===page;return <button key={page} type="button" onClick={()=>onNavigate(page)} className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1"><Icon size={23} strokeWidth={active?2.6:2} style={{color:active?'var(--brand-primary)':'var(--brand-muted-text)'}}/><span className="text-[11px] font-semibold" style={{color:active?'var(--brand-primary)':'var(--brand-muted-text)'}}>{label}</span></button>;})}</div></nav>;
 }
