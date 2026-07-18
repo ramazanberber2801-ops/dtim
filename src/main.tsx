@@ -50,7 +50,16 @@ function shouldShowCustomerPortal() {
   return ['/kunde', '/login', '/account', '/portal'].includes(window.location.pathname);
 }
 
+function routeCustomerPortalAdminLink() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('admin') !== '1' || window.location.pathname !== '/') return;
+  params.delete('admin');
+  const query = params.toString();
+  window.history.replaceState({}, document.title, `/admin${query ? `?${query}` : ''}`);
+}
+
 async function start() {
+  routeCustomerPortalAdminLink();
   await restoreWebsiteOnboardingSession();
   if (!shouldShowRegistration() && !shouldShowCustomerPortal()) await resolveOrganizationFromHostname();
 
