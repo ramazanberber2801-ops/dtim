@@ -5,6 +5,7 @@ import { DEFAULT_ORGANIZATION_ID } from './organization';
 export type ModuleId =
   | 'news'
   | 'activities'
+  | 'arrangement-pro'
   | 'members'
   | 'administration'
   | 'settings'
@@ -38,6 +39,7 @@ export type ModuleState = Record<string, boolean>;
 export const DEFAULT_MODULES: ModuleState = {
   news: true,
   activities: true,
+  'arrangement-pro': false,
   members: true,
   administration: true,
   settings: true,
