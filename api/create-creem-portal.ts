@@ -17,6 +17,15 @@ async function readJsonBody(req: IncomingMessage): Promise<PortalRequest> {
   return raw ? JSON.parse(raw) as PortalRequest : {};
 }
 
+function setCors(req: IncomingMessage, res: ServerResponse): void {
+  const origin = typeof req.headers.origin === 'string' ? req.headers.origin : '';
+  const allowed = origin === 'https://yasaflow.com' || origin === 'https://www.yasaflow.com' || origin.endsWith('.yasaflow.com');
+  if (allowed) res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+}
+
 function sendJson(res: ServerResponse, statusCode: number, body: unknown): void {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json');
@@ -55,8 +64,10 @@ async function getCustomerId(config: SupabaseConfig, organizationId: string): Pr
 }
 
 export default async function handler(req: IncomingMessage & { method?: string; headers: IncomingMessage['headers'] }, res: ServerResponse): Promise<void> {
+  setCors(req, res);
+  if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+    res.setHeader('Allow', 'POST, OPTIONS');
     sendJson(res, 405, { error: 'Method not allowed' });
     return;
   }
@@ -81,7 +92,7 @@ export default async function handler(req: IncomingMessage & { method?: string; 
   }
 
   const customerId = await getCustomerId(config, organizationId);
-  if (!customerId) return sendJson(res, 404, { error: 'No billing customer is linked to this organization yet' });
+  if (!customerId) return sendJson(res, 404, { error: 'Ingen fakturakonto finnes ennå. Start et abonnement først.' });
 
   const creemBaseUrl = apiKey.startsWith('creem_test_') ? 'https://test-api.creem.io' : 'https://api.creem.io';
   const response = await fetch(`${creemBaseUrl}/v1/customers/billing`, {
@@ -92,7 +103,7 @@ export default async function handler(req: IncomingMessage & { method?: string; 
   const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
   if (!response.ok) {
     console.error('Creem portal creation failed:', response.status, payload);
-    return sendJson(res, 502, { error: 'Could not open billing portal' });
+    return sendJson(res, 502, { error: 'Kunne ikke åpne fakturaportalen.' });
   }
 
   sendJson(res, 200, { portal_url: payload?.customer_portal_link ?? null });
