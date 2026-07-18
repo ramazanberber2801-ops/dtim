@@ -3,11 +3,13 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './owner-v2.css';
 import App from './App.tsx';
+import { AppProvider } from './context/AppContext';
 import { MemberAccessLauncher } from './components/MemberAccessLauncher';
 import { OrganizationAccessGate } from './components/OrganizationAccessGate';
 import { OrganizationRegistrationFlow } from './components/OrganizationRegistrationFlow';
 import { OrganizationSwitcher } from './components/OrganizationSwitcher';
 import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
+import { CustomerAccountPortal } from './pages/CustomerAccountPortal';
 import { AppI18nProvider } from './lib/appI18n';
 import { resolveOrganizationFromHostname, writeStoredAdminSession } from './lib/organization';
 import { supabase } from './lib/supabase';
@@ -44,14 +46,20 @@ function shouldShowRegistration() {
   return params.get('register') === '1' || params.get('onboarding') === '1' || window.location.pathname === '/registrer';
 }
 
+function shouldShowCustomerPortal() {
+  return ['/kunde', '/login', '/account', '/portal'].includes(window.location.pathname);
+}
+
 async function start() {
   await restoreWebsiteOnboardingSession();
-  if (!shouldShowRegistration()) await resolveOrganizationFromHostname();
+  if (!shouldShowRegistration() && !shouldShowCustomerPortal()) await resolveOrganizationFromHostname();
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       {shouldShowRegistration() ? (
         <OrganizationRegistrationFlow />
+      ) : shouldShowCustomerPortal() ? (
+        <AppI18nProvider><AppProvider><CustomerAccountPortal /></AppProvider></AppI18nProvider>
       ) : (
         <AppI18nProvider>
           <OwnerLanguageSelectorEnhancer />
