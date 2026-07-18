@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { BookOpen, Check, ChevronDown, Eye, Languages, Loader2, Save, Search, Settings } from 'lucide-react';
+import { OrganizationBillingModule } from './OrganizationBillingModule';
 import { useAppI18n } from '../lib/appI18n';
 import { findLanguage, searchLanguages } from '../lib/languageRegistry';
 import { notifyOrganizationModulesChanged } from '../lib/moduleEngine';
@@ -81,6 +82,7 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
 
   return <form onSubmit={save} className="space-y-4">
     <section className="rounded-3xl border bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><Settings style={{color:'var(--brand-primary)'}}/><div><h3 className="font-serif text-2xl">{t('settings.title')}</h3><p className="text-sm opacity-55">{t('settings.subtitle')}</p></div></div></section>
+    <OrganizationBillingModule organizationId={organizationId}/>
 
     <section className="rounded-3xl border bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3"><Languages size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">{t('settings.appLanguage')}</h4><p className="mt-1 text-xs opacity-55">{t('settings.languageHelp')}</p></div></div>
