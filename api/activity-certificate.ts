@@ -5,18 +5,22 @@ const supabaseUrl=process.env.VITE_SUPABASE_URL;
 const serviceRoleKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const appUrl=(process.env.PUBLIC_APP_URL||process.env.VITE_PUBLIC_APP_URL||'https://app.yasaflow.com').replace(/\/$/,'');
 const escapeHtml=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function handler(req:VercelRequest,res:VercelResponse){
   if(req.method!=='GET')return res.status(405).send('Method not allowed');
   if(!supabaseUrl||!serviceRoleKey)return res.status(500).send('Missing server configuration');
   const token=String(req.query.token||'').trim();
-  if(!/^[0-9a-f-]{36}$/i.test(token))return res.status(400).send('Ugyldig kursbevis');
+  if(!uuid.test(token))return res.status(400).send('Ugyldig kursbevis');
   const supabase=createClient(supabaseUrl,serviceRoleKey,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data,error}=await supabase.from('activity_registrations')
-    .select('id,full_name,certificate_issued_at,certificate_token,status,checked_in,activity:organization_activities(id,title,activity_date,location,certificate_title,certificate_signature_name,organization:organizations(name,logo_url))')
+    .select('id,full_name,activity_id,certificate_issued_at,certificate_token,status,activity:organization_activities(id,title,activity_date,location,certificate_title,certificate_signature_name,organization:organizations(name,logo_url))')
     .eq('certificate_token',token).maybeSingle();
   if(error)return res.status(500).send('Kursbeviset kunne ikke leses');
-  if(!data||!data.certificate_issued_at||data.status!=='confirmed'||!data.checked_in)return res.status(404).send('Kursbeviset finnes ikke eller er ikke gyldig');
+  if(!data||!data.certificate_issued_at||data.status!=='confirmed')return res.status(404).send('Kursbeviset finnes ikke eller er ikke gyldig');
+  const {data:checkin,error:checkinError}=await supabase.from('activity_checkins').select('id').eq('activity_id',data.activity_id).eq('registration_id',data.id).maybeSingle();
+  if(checkinError)return res.status(500).send('Kursbeviset kunne ikke verifiseres');
+  if(!checkin)return res.status(404).send('Kursbeviset finnes ikke eller er ikke gyldig');
   const activity=data.activity as unknown as {id:string;title:string;activity_date:string;location?:string|null;certificate_title?:string|null;certificate_signature_name?:string|null;organization?:{name?:string;logo_url?:string|null}|null};
   const organization=activity.organization?.name||'Yasaflow';
   const verifyUrl=`${appUrl}/api/activity-certificate?token=${encodeURIComponent(token)}`;
