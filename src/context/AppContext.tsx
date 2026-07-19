@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { clearStoredAdminSession, getCurrentOrganizationId, readStoredAdminSession, writeStoredAdminSession } from '../lib/organization';
 import { sendPushNotification } from '../lib/pushNotifications';
 import { supabase } from '../lib/supabase';
@@ -35,7 +35,7 @@ const mapSettingsToDb=(s:any,organizationId:string)=>({organization_id:organizat
 
 export const AppProvider:React.FC<{children:React.ReactNode}>=({children})=>{
   const { language } = useAppI18n();
-  const t=(key:string)=>getSystemTranslation(language,key);
+  const t=useCallback((key:string)=>getSystemTranslation(language,key),[language]);
   const savedAdmin=getSavedAdmin();
   const [news,setNews]=useState<any[]>([]); const [staff,setStaff]=useState<any[]>([]); const [sohbet,setSohbet]=useState<any[]>([]);
   const [settings,setSettings]=useState<any>({vippsNumber:'',vippsButtonEnabled:false,vippsDonationUrl:'',brandingPrimaryColor:'#0A8DFF',brandingSecondaryColor:'#071B53',brandingBackgroundColor:'#F4FAFF',brandingTextColor:'#071B53'});
@@ -46,7 +46,7 @@ export const AppProvider:React.FC<{children:React.ReactNode}>=({children})=>{
   const sendPush=async(title:string,body:string)=>{try{await sendPushNotification({title,body,url:`/?org=${encodeURIComponent(organizationId)}`,organizationId});await trackEvent('push_sent','',title);}catch(e){console.error('PUSH ERROR:',e);}};
   const sendSohbetReminder=async(item:any)=>sendPush(`🔔 ${item.title}`,`${item.date} ${item.time}${item.speaker?` - ${item.speaker}`:''}`);
 
-  const loadAllData=async()=>{
+  const loadAllData=useCallback(async()=>{
     const client=supabase;if(!client){setLoading(false);return;}
     setLoading(true);
     try{
@@ -63,9 +63,9 @@ export const AppProvider:React.FC<{children:React.ReactNode}>=({children})=>{
       if(activities.data)setSohbet(activities.data.map(mapActivity)); else setSohbet([]);
       if(insp.data)setInspiration(insp.data); if(a.data)setAdmins(a.data.map(sanitizeAdmin)); if(setRes.data)setSettings(mapSettingsFromDb(setRes.data));
     }catch(e){console.error(t('loadOrganizationData'),e);}finally{setLoading(false);}
-  };
+  },[organizationId,t]);
 
-  useEffect(()=>{void loadAllData();const client=supabase;if(!client)return;const {data}=client.auth.onAuthStateChange(()=>void loadAllData());const refresh=()=>void loadAllData();window.addEventListener('yasaflow-membership-changed',refresh);return()=>{data.subscription.unsubscribe();window.removeEventListener('yasaflow-membership-changed',refresh);};},[organizationId,language]);
+  useEffect(()=>{void loadAllData();const client=supabase;if(!client)return;const {data}=client.auth.onAuthStateChange(()=>void loadAllData());const refresh=()=>void loadAllData();window.addEventListener('yasaflow-membership-changed',refresh);return()=>{data.subscription.unsubscribe();window.removeEventListener('yasaflow-membership-changed',refresh);};},[loadAllData]);
 
   const login=async(email:string,password:string):Promise<boolean>=>{
     if(!supabase)return false;const normalizedEmail=email.trim().toLowerCase();const {data:authData,error:authError}=await supabase.auth.signInWithPassword({email:normalizedEmail,password});if(authError||!authData.user)return false;
