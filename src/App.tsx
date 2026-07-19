@@ -99,7 +99,9 @@ function AppContent() {
     if (!isInitialized) return;
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
     const params = new URLSearchParams(window.location.search);
-    if (path === '/admin' || path === '/login' || params.get('login') === '1' || params.get('payment') === 'success') {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const isRecovery = params.get('recovery') === '1' || hash.get('type') === 'recovery';
+    if (path === '/admin' || path === '/login' || params.get('login') === '1' || params.get('payment') === 'success' || isRecovery) {
       queueMicrotask(openAdmin);
     }
   }, [isInitialized, openAdmin]);
