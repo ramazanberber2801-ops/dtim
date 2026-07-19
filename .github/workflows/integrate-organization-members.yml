@@ -1,0 +1,52 @@
+name: Integrate organization members panel
+
+on:
+  push:
+    paths:
+      - '.github/workflows/integrate-organization-members.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Integrate component in OwnerPanel
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/OwnerPanelV2.tsx')
+          text = path.read_text()
+
+          invitation_import = "import { OrganizationInvitationOverview } from '../components/owner/OrganizationInvitationOverview';"
+          members_import = "import { OrganizationMembersAndRoles } from '../components/owner/OrganizationMembersAndRoles';"
+          if members_import not in text:
+              text = text.replace(invitation_import, invitation_import + "\n" + members_import)
+
+          invitation_panel = "    {!isCreating&&organization.id&&<OrganizationInvitationOverview organizationId={organization.id}/>}"
+          members_panel = "    {!isCreating&&organization.id&&<OrganizationMembersAndRoles organizationId={organization.id}/>}"
+          if members_panel not in text:
+              text = text.replace(invitation_panel, members_panel + "\n\n" + invitation_panel)
+
+          path.write_text(text)
+          PY
+      - name: Commit integration
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/OwnerPanelV2.tsx
+          git commit -m "Show organization members and roles in OwnerPanel"
+          git push
