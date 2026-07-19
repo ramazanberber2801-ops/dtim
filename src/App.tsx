@@ -100,13 +100,16 @@ function AppContent() {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
     const params = new URLSearchParams(window.location.search);
     if (path === '/admin' || path === '/login' || params.get('login') === '1' || params.get('payment') === 'success') {
-      openAdmin();
+      queueMicrotask(openAdmin);
     }
   }, [isInitialized, openAdmin]);
 
   useEffect(() => {
     if (!isInitialized) return;
-    if (!supabase) { setThemeLoaded(true); return; }
+    if (!supabase) {
+      queueMicrotask(() => setThemeLoaded(true));
+      return;
+    }
     supabase.from('organizations').select('theme_id').eq('id', DEFAULT_ORGANIZATION_ID).single().then(({ data }) => {
       if (data?.theme_id) setThemeId(data.theme_id);
       setThemeLoaded(true);
@@ -114,15 +117,19 @@ function AppContent() {
   }, [isInitialized]);
 
   useEffect(() => {
-    if (page === 'activities' && !enabled('activities', true)) setPage('home');
-    if (page === 'notifications' && !enabled('push')) setPage('more');
+    if (page === 'activities' && !enabled('activities', true)) {
+      queueMicrotask(() => setPage('home'));
+    }
+    if (page === 'notifications' && !enabled('push')) {
+      queueMicrotask(() => setPage('more'));
+    }
   }, [page, enabled]);
 
   useEffect(() => {
     if (!isInitialized || !enabled('push')) return;
     const params = new URLSearchParams(window.location.search);
     const messageId = params.get('notification') || params.get('message_id');
-    if (messageId) openNotificationById(messageId);
+    if (messageId) queueMicrotask(() => openNotificationById(messageId));
 
     void refreshUnread();
     const handleRead = () => void refreshUnread();
