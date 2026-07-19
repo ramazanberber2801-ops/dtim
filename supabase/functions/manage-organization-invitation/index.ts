@@ -71,6 +71,26 @@ Deno.serve(async (request) => {
       return json({ error: 'Handling, invitasjon og organisasjon er påkrevd.' }, 400);
     }
 
+    const platformRole = String(userData.user.app_metadata?.role || '');
+    const isPlatformOwner = ['owner', 'superadmin', 'platform_owner'].includes(platformRole);
+    if (!isPlatformOwner) {
+      const email = userData.user.email?.trim().toLowerCase();
+      if (!email) return json({ error: 'Brukerkontoen mangler e-post.' }, 403);
+
+      const { data: membership, error: membershipError } = await adminClient
+        .from('organization_admins')
+        .select('role,invitation_status')
+        .eq('organization_id', organizationId)
+        .ilike('email', email)
+        .maybeSingle();
+
+      const active = ['accepted', 'active'].includes(membership?.invitation_status || '');
+      const allowed = active && ['owner', 'admin'].includes(membership?.role || '');
+      if (membershipError || !allowed) {
+        return json({ error: 'Du har ikke tilgang til å administrere invitasjoner for denne organisasjonen.' }, 403);
+      }
+    }
+
     const { data, error: invitationError } = await adminClient
       .from('organization_invitations')
       .select('id,organization_id,email,display_name,role,status,expires_at')
@@ -80,6 +100,10 @@ Deno.serve(async (request) => {
 
     if (invitationError || !data) return json({ error: 'Invitasjonen ble ikke funnet.' }, 404);
     const invitation = data as InvitationRow;
+
+    if (invitation.role === 'owner' && !isPlatformOwner) {
+      return json({ error: 'Bare eier kan administrere eierinvitasjoner.' }, 403);
+    }
 
     if (action === 'revoke') {
       if (!['pending', 'sent'].includes(invitation.status)) {
