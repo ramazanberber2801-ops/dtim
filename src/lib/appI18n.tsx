@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { findLanguage } from './languageRegistry';
-import { DEFAULT_ORGANIZATION_ID } from './organization';
+import { getCurrentOrganizationId } from './organization';
 import { supabase } from './supabase';
 
 type Dictionary = Record<string, string>;
@@ -58,15 +58,26 @@ const I18nContext = createContext<I18nValue>({ language:'nb', direction:'ltr', l
 
 export function AppI18nProvider({ children }: { children: ReactNode }) {
   const [language,setLanguage]=useState('nb');
-  const load=async()=>{
+  const load=useCallback(async()=>{
     if(!supabase)return;
-    const {data}=await supabase.from('organizations').select('language').eq('id',DEFAULT_ORGANIZATION_ID).maybeSingle();
+    const organizationId=getCurrentOrganizationId();
+    if(!organizationId)return;
+    const {data}=await supabase.from('organizations').select('language').eq('id',organizationId).maybeSingle();
     setLanguage(findLanguage(data?.language).code);
-  };
-  useEffect(()=>{void load();const handler=()=>void load();window.addEventListener('yasaflow-organization-settings-changed',handler);return()=>window.removeEventListener('yasaflow-organization-settings-changed',handler);},[]);
+  },[]);
+  useEffect(()=>{
+    void load();
+    const handler=()=>void load();
+    window.addEventListener('yasaflow-organization-settings-changed',handler);
+    window.addEventListener('yasaflow-organization-changed',handler);
+    return()=>{
+      window.removeEventListener('yasaflow-organization-settings-changed',handler);
+      window.removeEventListener('yasaflow-organization-changed',handler);
+    };
+  },[load]);
   const meta=findLanguage(language);
   useEffect(()=>{document.documentElement.lang=meta.locale;document.documentElement.dir=meta.direction;},[meta.locale,meta.direction]);
-  const value=useMemo<I18nValue>(()=>({language:meta.code,direction:meta.direction,locale:meta.locale,t:(key)=>dictionaries[meta.code]?.[key]||en[key]||nb[key]||key,reload:load}),[meta.code,meta.direction,meta.locale]);
+  const value=useMemo<I18nValue>(()=>({language:meta.code,direction:meta.direction,locale:meta.locale,t:(key)=>dictionaries[meta.code]?.[key]||en[key]||nb[key]||key,reload:load}),[meta.code,meta.direction,meta.locale,load]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
