@@ -1,0 +1,27 @@
+create index if not exists activity_checkins_registration_id_idx on public.activity_checkins (registration_id);
+create index if not exists activity_evaluations_registration_id_idx on public.activity_evaluations (registration_id);
+create index if not exists activity_finance_entries_organization_id_idx on public.activity_finance_entries (organization_id);
+create index if not exists activity_finance_entries_registration_id_idx on public.activity_finance_entries (registration_id);
+create index if not exists activity_offline_sync_events_activity_id_idx on public.activity_offline_sync_events (activity_id);
+create index if not exists activity_registrations_organization_id_idx on public.activity_registrations (organization_id);
+create index if not exists activity_waitlist_notifications_activity_id_idx on public.activity_waitlist_notifications (activity_id);
+create index if not exists activity_waitlist_notifications_organization_id_idx on public.activity_waitlist_notifications (organization_id);
+create index if not exists organization_activities_recurrence_parent_id_idx on public.organization_activities (recurrence_parent_id);
+create index if not exists organization_group_members_membership_id_idx on public.organization_group_members (membership_id);
+create index if not exists organization_user_memberships_invitation_code_id_idx on public.organization_user_memberships (invitation_code_id);
+create index if not exists paddle_webhook_events_organization_id_idx on public.paddle_webhook_events (organization_id);
+drop index if exists public.activity_checkins_registration_once_uidx;
+
+revoke execute on function public.add_member_to_group(uuid, uuid) from anon;
+revoke execute on function public.remove_member_from_group(uuid, uuid) from anon;
+revoke execute on function public.create_activity_evaluation_invites(uuid) from anon;
+revoke execute on function public.create_recurring_activity_instances(uuid, text, integer, integer) from anon;
+revoke execute on function public.issue_activity_certificate(uuid) from anon;
+revoke execute on function public.manage_activity_series(uuid, text, text, text, date, time without time zone, time without time zone, text, integer, text) from anon;
+revoke execute on function public.prepare_membership_email(uuid, text) from anon;
+revoke execute on function public.process_activity_waitlist(uuid) from anon;
+revoke execute on function public.promote_activity_waitlist_registration(uuid) from anon;
+revoke execute on function public.review_membership_request(uuid, text) from anon;
+revoke execute on function public.set_activity_registration_payment(uuid, boolean) from anon;
+revoke execute on function public.set_organization_group_members(text, uuid, uuid[]) from anon;
+revoke execute on function public.update_customer_portal_organization(text, text, text, text, text, text, text, text, text, text, text, text, text) from anon;
