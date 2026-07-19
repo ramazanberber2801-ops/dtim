@@ -9,6 +9,14 @@ export type OwnerOrganizationDraft = {
 };
 
 export type OwnerPanelValidationErrors = Partial<Record<keyof OwnerOrganizationDraft, string>>;
+export type OwnerPanelOperationState = 'idle' | 'saving' | 'success' | 'error' | 'sending' | 'sent';
+
+type ErrorLike = {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+};
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ORGANIZATION_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -138,4 +146,47 @@ export function getOwnerPanelErrorSummary(errors: OwnerPanelValidationErrors) {
 
 export function getOwnerPanelFieldErrorId(field: keyof OwnerOrganizationDraft) {
   return `owner-panel-${field}-error`;
+}
+
+export function getOwnerPanelFieldAccessibility(
+  field: keyof OwnerOrganizationDraft,
+  errors: OwnerPanelValidationErrors,
+) {
+  const hasError = Boolean(errors[field]);
+  return {
+    'aria-invalid': hasError || undefined,
+    'aria-describedby': hasError ? getOwnerPanelFieldErrorId(field) : undefined,
+  } as const;
+}
+
+export function isOwnerPanelBusy(state: OwnerPanelOperationState) {
+  return state === 'saving' || state === 'sending';
+}
+
+export function mapOwnerPanelError(error: unknown, fallback = 'Noe gikk galt. Prøv igjen.') {
+  const candidate = (error && typeof error === 'object' ? error : {}) as ErrorLike;
+  const message = candidate.message?.trim() || (error instanceof Error ? error.message.trim() : '');
+  const code = candidate.code?.trim();
+  const searchable = `${code ?? ''} ${message} ${candidate.details ?? ''} ${candidate.hint ?? ''}`.toLowerCase();
+
+  if (code === '23505' || searchable.includes('duplicate key') || searchable.includes('already exists')) {
+    return 'En organisasjon eller administrator med disse opplysningene finnes allerede.';
+  }
+  if (code === '23503' || searchable.includes('foreign key')) {
+    return 'Kunne ikke lagre fordi en tilknyttet oppføring mangler. Oppdater siden og prøv igjen.';
+  }
+  if (code === '42501' || searchable.includes('row-level security') || searchable.includes('permission denied')) {
+    return 'Du har ikke tilgang til å utføre denne handlingen.';
+  }
+  if (searchable.includes('failed to fetch') || searchable.includes('network') || searchable.includes('timeout')) {
+    return 'Kunne ikke kontakte serveren. Kontroller nettforbindelsen og prøv igjen.';
+  }
+  if (searchable.includes('jwt') || searchable.includes('session') || searchable.includes('not authenticated')) {
+    return 'Økten din har utløpt. Logg inn på nytt og prøv igjen.';
+  }
+  if (message && !/supabase|postgres|relation|constraint|schema/i.test(message)) {
+    return message;
+  }
+
+  return fallback;
 }
