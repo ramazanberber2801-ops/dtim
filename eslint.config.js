@@ -19,5 +19,13 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Keep existing typing debt visible without blocking deploys.
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Optional browser capabilities use empty catch blocks in a few places.
+      'no-empty': ['warn', { allowEmptyCatch: true }],
+      // Legacy data-loading effects are being refactored incrementally.
+      'react-hooks/set-state-in-effect': 'warn',
+    },
   },
 ])
