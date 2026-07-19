@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { BottomNav } from './components/BottomNav';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPanel } from './pages/AdminPanel';
+import { AcceptInvitationPage } from './pages/AcceptInvitationPage';
 import { DonationModal } from './components/DonationModal';
 import { InstallButton } from './components/InstallButton';
 import { InstallGuideModal } from './components/InstallGuideModal';
@@ -178,5 +179,7 @@ function AppContent() {
 }
 
 export default function App() {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (path === '/accept-invitation') return <AcceptInvitationPage />;
   return <AppProvider><AppContent /></AppProvider>;
 }
