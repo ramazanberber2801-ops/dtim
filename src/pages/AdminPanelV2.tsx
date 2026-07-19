@@ -1,11 +1,15 @@
-import { X, LogOut, ShieldCheck, Crown, Building2 } from 'lucide-react';
+import { Suspense, lazy } from 'react';
+import { X, LogOut, ShieldCheck, Crown, Building2, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OwnerOverview } from '../components/OwnerOverview';
 import { OwnerThemeManager } from '../components/OwnerThemeManager';
 import { OrganizationAdminPortal } from './OrganizationAdminPortal';
-import { OwnerPanelV2 } from './OwnerPanelV2';
 import { useAppI18n } from '../lib/appI18n';
 import { getAdminShellCopy } from '../lib/appUiCopy';
+
+const OwnerPanelV2 = lazy(() =>
+  import('./OwnerPanelV2').then((module) => ({ default: module.OwnerPanelV2 })),
+);
 
 const brand = {
   primary: 'var(--brand-primary)',
@@ -19,6 +23,20 @@ const mix = (color: string, amount: number, fallback = 'transparent') =>
   `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
 const isOwnerRole = (role?: string) => ['owner', 'super_admin', 'superadmin'].includes(String(role || '').trim());
+
+function OwnerPanelLoading() {
+  return (
+    <div
+      className="mx-4 mt-4 flex min-h-40 items-center justify-center gap-2 rounded-2xl border-2 bg-white p-6 text-sm shadow-sm"
+      style={{ borderColor: mix(brand.primary, 20), color: brand.text }}
+      role="status"
+      aria-live="polite"
+    >
+      <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+      <span>Laster eierpanelet…</span>
+    </div>
+  );
+}
 
 export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { currentAdmin, logout } = useApp();
@@ -36,7 +54,14 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   return (
-    <div dir={direction} className="fixed inset-0 z-[80] flex min-h-0 flex-col overflow-hidden" style={{ backgroundColor: brand.background, color: brand.text }}>
+    <div
+      dir={direction}
+      className="fixed inset-0 z-[80] flex min-h-0 flex-col overflow-hidden"
+      style={{ backgroundColor: brand.background, color: brand.text }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-panel-title"
+    >
       <header
         className="shrink-0 px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-md sm:px-5 sm:py-4"
         style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}
@@ -44,10 +69,10 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: mix(brand.primary, 22) }}>
-              <ShieldCheck size={18} style={{ color: brand.primary }} />
+              <ShieldCheck size={18} style={{ color: brand.primary }} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-serif text-base sm:text-lg">{text.title}</h1>
+              <h1 id="admin-panel-title" className="truncate font-serif text-base sm:text-lg">{text.title}</h1>
               <p className="truncate text-[10px] opacity-60">
                 {administratorName} · {canAccessOwner ? text.owner : text.administrator}
               </p>
@@ -56,21 +81,23 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
+              type="button"
               onClick={handleLogout}
               className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs sm:px-3"
               style={{ backgroundColor: 'rgba(255,255,255,0.10)', color: brand.secondaryText }}
               aria-label={text.logout}
             >
-              <LogOut size={15} />
+              <LogOut size={15} aria-hidden="true" />
               <span className="hidden sm:inline">{text.logout}</span>
             </button>
             <button
+              type="button"
               onClick={onClose}
               className="flex h-9 w-9 items-center justify-center rounded-lg"
               style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}
               aria-label={text.close}
             >
-              <X size={18} style={{ color: brand.secondaryText }} />
+              <X size={18} style={{ color: brand.secondaryText }} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -78,7 +105,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
 
       <div className="shrink-0 border-b-2 bg-white" style={{ borderColor: mix(brand.primary, 20) }}>
         <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium" style={{ color: brand.primary }}>
-          {canAccessOwner ? <Crown size={15} /> : <Building2 size={15} />}
+          {canAccessOwner ? <Crown size={15} aria-hidden="true" /> : <Building2 size={15} aria-hidden="true" />}
           <span>{canAccessOwner ? text.ownerPanel : text.administratorPortal}</span>
         </div>
       </div>
@@ -88,7 +115,9 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
           {canAccessOwner ? (
             <>
               <OwnerOverview />
-              <OwnerPanelV2 />
+              <Suspense fallback={<OwnerPanelLoading />}>
+                <OwnerPanelV2 />
+              </Suspense>
               <OwnerThemeManager />
             </>
           ) : (
