@@ -63,7 +63,7 @@ export async function loadOrganizationModules(organizationId = DEFAULT_ORGANIZAT
   if (!supabase) return DEFAULT_MODULES;
 
   const { data, error } = await supabase
-    .from('organization_modules')
+    .from('organization_module_entitlements')
     .select('module_id, enabled')
     .eq('organization_id', organizationId);
 
