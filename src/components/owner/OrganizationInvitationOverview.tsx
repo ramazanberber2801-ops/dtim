@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Clock3, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Ban, Clock3, Mail, RefreshCw, RotateCw, ShieldCheck } from 'lucide-react';
+import {
+  resendOrganizationInvitation,
+  revokeOrganizationInvitation,
+} from '../../lib/organizationInvitationActions';
 import { supabase } from '../../lib/supabase';
 
 type InvitationStatus = 'pending' | 'sent' | 'accepted' | 'expired' | 'revoked' | 'failed';
@@ -45,7 +49,9 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [filter, setFilter] = useState<'all' | InvitationStatus>('all');
+  const [actionId, setActionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!supabase || !organizationId) {
@@ -87,6 +93,46 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
     return result;
   }, {}), [invitations]);
 
+  const resend = async (invitation: Invitation) => {
+    if (actionId) return;
+    const confirmed = window.confirm(`Sende en ny invitasjon til ${invitation.email}? Den gamle lenken blir ugyldig.`);
+    if (!confirmed) return;
+
+    setActionId(invitation.id);
+    setError('');
+    setMessage('Sender ny invitasjon...');
+    try {
+      const result = await resendOrganizationInvitation(invitation.id, organizationId);
+      setMessage(`Ny invitasjon er sendt til ${result.email || invitation.email}${result.expiresAt ? ` og utløper ${dateTime(result.expiresAt)}` : ''}.`);
+      await load();
+    } catch (actionError) {
+      setMessage('');
+      setError(actionError instanceof Error ? actionError.message : 'Kunne ikke sende invitasjonen på nytt.');
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const revoke = async (invitation: Invitation) => {
+    if (actionId) return;
+    const confirmed = window.confirm(`Tilbakekalle invitasjonen til ${invitation.email}? Lenken vil slutte å virke med en gang.`);
+    if (!confirmed) return;
+
+    setActionId(invitation.id);
+    setError('');
+    setMessage('Tilbakekaller invitasjonen...');
+    try {
+      await revokeOrganizationInvitation(invitation.id, organizationId);
+      setMessage(`Invitasjonen til ${invitation.email} er tilbakekalt.`);
+      await load();
+    } catch (actionError) {
+      setMessage('');
+      setError(actionError instanceof Error ? actionError.message : 'Kunne ikke tilbakekalle invitasjonen.');
+    } finally {
+      setActionId(null);
+    }
+  };
+
   if (!organizationId) return null;
 
   return (
@@ -96,7 +142,7 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--brand-subtle)', color: 'var(--brand-primary)' }}><Mail size={18} /></div>
           <div><h3 className="font-serif text-lg">Invitasjonsoversikt</h3><p className="text-xs opacity-55">{invitations.length} invitasjoner</p></div>
         </div>
-        <button type="button" onClick={() => void load()} disabled={loading} className="rounded-xl border p-2 disabled:opacity-50" aria-label="Oppdater invitasjoner"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
+        <button type="button" onClick={() => void load()} disabled={loading || Boolean(actionId)} className="rounded-xl border p-2 disabled:opacity-50" aria-label="Oppdater invitasjoner"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
@@ -107,12 +153,16 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
         ))}
       </div>
 
-      {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+      {message && <p aria-live="polite" className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">{message}</p>}
+      {error && <p role="alert" className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
       {!error && !loading && visible.length === 0 && <p className="rounded-xl border p-4 text-center text-sm opacity-55">Ingen invitasjoner å vise.</p>}
 
       <div className="space-y-2">
         {visible.map((invitation) => {
           const status = effectiveStatus(invitation);
+          const busy = actionId === invitation.id;
+          const canResend = ['pending', 'sent', 'expired', 'failed'].includes(status);
+          const canRevoke = status === 'pending' || status === 'sent';
           return (
             <article key={invitation.id} className="rounded-xl border p-3" style={{ borderColor: 'var(--brand-border)' }}>
               <div className="flex items-start justify-between gap-3">
@@ -124,6 +174,12 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
                 <span className="flex items-center gap-1"><Clock3 size={13} />Sendt {dateTime(invitation.sent_at || invitation.created_at)}</span>
                 <span className="flex items-center gap-1"><Clock3 size={13} />{status === 'accepted' ? `Akseptert ${dateTime(invitation.accepted_at)}` : `Utløper ${dateTime(invitation.expires_at)}`}</span>
               </div>
+              {(canResend || canRevoke) && (
+                <div className="mt-3 flex flex-wrap gap-2 border-t pt-3" style={{ borderColor: 'var(--brand-border)' }}>
+                  {canResend && <button type="button" disabled={Boolean(actionId)} onClick={() => void resend(invitation)} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50" style={{ borderColor: 'var(--brand-border)' }}><RotateCw size={14} className={busy ? 'animate-spin' : ''} />Send på nytt</button>}
+                  {canRevoke && <button type="button" disabled={Boolean(actionId)} onClick={() => void revoke(invitation)} className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-700 disabled:cursor-not-allowed disabled:opacity-50"><Ban size={14} />Tilbakekall</button>}
+                </div>
+              )}
             </article>
           );
         })}
