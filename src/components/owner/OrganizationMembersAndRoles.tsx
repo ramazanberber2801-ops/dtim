@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshCw, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { LockKeyhole, RefreshCw, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { getOrganizationPermissions, type OrganizationRole } from '../../lib/organizationRbac';
 import { supabase } from '../../lib/supabase';
-
-type OrganizationRole = 'owner' | 'admin' | 'staff';
 
 type OrganizationMember = {
   organization_id: string;
@@ -43,26 +42,33 @@ export function OrganizationMembersAndRoles({ organizationId }: Props) {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [filter, setFilter] = useState<'all' | OrganizationRole>('all');
+  const [currentRole, setCurrentRole] = useState<OrganizationRole | null>(null);
+  const canManageMembers = currentRole === 'owner';
 
   const load = useCallback(async () => {
     if (!supabase || !organizationId) {
       setMembers([]);
+      setCurrentRole(null);
       return;
     }
 
     setLoading(true);
     setError('');
-    const { data, error: queryError } = await supabase
-      .from('organization_admins')
-      .select('organization_id,email,display_name,role,invitation_status,updated_at')
-      .eq('organization_id', organizationId)
-      .order('updated_at', { ascending: false });
+    const [permissions, membersResult] = await Promise.all([
+      getOrganizationPermissions(organizationId),
+      supabase
+        .from('organization_admins')
+        .select('organization_id,email,display_name,role,invitation_status,updated_at')
+        .eq('organization_id', organizationId)
+        .order('updated_at', { ascending: false }),
+    ]);
 
-    if (queryError) {
-      setError(queryError.message || 'Kunne ikke hente organisasjonsmedlemmene.');
+    setCurrentRole(permissions.role);
+    if (membersResult.error) {
+      setError(membersResult.error.message || 'Kunne ikke hente organisasjonsmedlemmene.');
       setMembers([]);
     } else {
-      setMembers((data || []) as OrganizationMember[]);
+      setMembers((membersResult.data || []) as OrganizationMember[]);
     }
     setLoading(false);
   }, [organizationId]);
@@ -92,7 +98,12 @@ export function OrganizationMembersAndRoles({ organizationId }: Props) {
   );
 
   const changeRole = async (member: OrganizationMember, role: OrganizationRole) => {
-    if (!supabase || savingEmail || role === member.role) return;
+    if (!supabase || !canManageMembers || savingEmail || role === member.role) return;
+    if (member.role === 'owner' && counts.owner <= 1 && role !== 'owner') {
+      setError('Organisasjonen må alltid ha minst én eier.');
+      return;
+    }
+
     setSavingEmail(member.email);
     setError('');
     setMessage('');
@@ -125,6 +136,12 @@ export function OrganizationMembersAndRoles({ organizationId }: Props) {
         <button type="button" onClick={() => void load()} disabled={loading} className="rounded-xl border p-2 disabled:opacity-50" aria-label="Oppdater medlemmer"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
       </div>
 
+      {!canManageMembers && currentRole && (
+        <p className="mb-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <LockKeyhole size={14} /> Bare eier kan endre roller. Du har rollen {roleLabels[currentRole]}.
+        </p>
+      )}
+
       <div className="mb-3 flex flex-wrap gap-2">
         {(['all', 'owner', 'admin', 'staff'] as const).map((role) => (
           <button key={role} type="button" onClick={() => setFilter(role)} className="rounded-full border px-3 py-1.5 text-xs" style={{ background: filter === role ? 'var(--brand-primary)' : 'white', color: filter === role ? 'var(--brand-primary-text)' : 'var(--brand-text)', borderColor: 'var(--brand-border)' }}>
@@ -153,9 +170,9 @@ export function OrganizationMembersAndRoles({ organizationId }: Props) {
                 <span className="opacity-60">Rolle</span>
                 <select
                   value={member.role}
-                  disabled={Boolean(savingEmail)}
+                  disabled={!canManageMembers || Boolean(savingEmail)}
                   onChange={(event) => void changeRole(member, event.target.value as OrganizationRole)}
-                  className="rounded-xl border bg-white px-3 py-2 disabled:opacity-50"
+                  className="rounded-xl border bg-white px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ borderColor: 'var(--brand-border)', color: 'var(--brand-text)' }}
                   aria-label={`Rolle for ${member.display_name || member.email}`}
                 >
