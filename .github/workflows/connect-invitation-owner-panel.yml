@@ -1,0 +1,47 @@
+name: Connect OwnerPanel invitation service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/connect-invitation-owner-panel.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-owner-panel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect invitation service
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/pages/OwnerPanelV2.tsx')
+          content = path.read_text(encoding='utf-8')
+
+          old_import = "import { supabase } from '../lib/supabase';"
+          new_import = "import { sendOrganizationInvitation } from '../lib/organizationInvitations';\nimport { supabase } from '../lib/supabase';"
+
+          old_handler = "  const sendInvite=async()=>{if(isBusy)return;const org=validateForm(true);if(!org){setInviteState('error');setInviteMessage('Kontroller feltene som er markert.');return;}setInviteState('sending');setInviteMessage('Sender invitasjon...');try{await persistOrganization(org);setErrors({});setInviteState('sent');setInviteMessage('Invitasjonen er registrert.');}catch(error){console.error('OwnerPanel invitation failed',error);setInviteState('error');setInviteMessage(error instanceof Error?error.message:'Kunne ikke sende invitasjonen.');}};"
+          new_handler = "  const sendInvite=async()=>{if(isBusy)return;const org=validateForm(true);if(!org){setInviteState('error');setInviteMessage('Kontroller feltene som er markert.');return;}setInviteState('sending');setInviteMessage('Sender invitasjon...');try{await persistOrganization(org);const invitation=await sendOrganizationInvitation({organizationId:org.id,organizationName:org.name,adminName:org.adminName,adminEmail:org.adminEmail});setErrors({});setInviteState('sent');setInviteMessage(`Invitasjonen er sendt til ${invitation.email}. Lenken utløper ${new Date(invitation.expiresAt).toLocaleString('nb-NO')}.`);if(supabase){const {error}=await supabase.from('organization_admins').update({invitation_status:'invited',updated_at:new Date().toISOString()}).eq('organization_id',org.id).eq('email',invitation.email);if(error)console.error('Could not update invitation status',error);}}catch(error){console.error('OwnerPanel invitation failed',error);setInviteState('error');setInviteMessage(error instanceof Error?error.message:'Kunne ikke sende invitasjonen.');}};"
+
+          if old_import not in content:
+              raise SystemExit('Expected Supabase import was not found.')
+          if old_handler not in content:
+              raise SystemExit('Expected sendInvite handler was not found.')
+
+          content = content.replace(old_import, new_import, 1)
+          content = content.replace(old_handler, new_handler, 1)
+          path.write_text(content, encoding='utf-8')
+
+      - name: Commit OwnerPanel update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/OwnerPanelV2.tsx
+          git commit -m "Wire OwnerPanel to invitation service"
+          git push
