@@ -49,8 +49,11 @@ export function ForgotPasswordModal({
 
     setLoading(true);
 
+    const recoveryUrl = new URL('/login', window.location.origin);
+    recoveryUrl.searchParams.set('recovery', '1');
+
     const { error } = await client.auth.resetPasswordForEmail(cleanEmail, {
-      redirectTo: window.location.origin,
+      redirectTo: recoveryUrl.toString(),
     });
 
     setLoading(false);
