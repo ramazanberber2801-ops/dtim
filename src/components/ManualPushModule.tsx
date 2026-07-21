@@ -50,8 +50,9 @@ export function ManualPushModule({ organizationId }: { organizationId: string })
         organizationId,
       });
       const failed = Number(response.failed || 0);
+      const removed = Number(response.removed || 0);
       setPartialFailure(failed > 0);
-      setResult(`${t('push.sentPrefix')}${response.sent}${t('push.failedCount')}${failed}.`);
+      setResult(`${t('push.sentPrefix')}${response.sent}${t('push.failedCount')}${failed}${t('push.removedCount')}${removed}.`);
       setTitle('');
       setMessage('');
     } catch (sendError) {
