@@ -3,8 +3,7 @@ export type AppUiLanguage = 'nb' | 'en' | 'da' | 'tr' | 'ar' | 'ur';
 type BottomNavCopy = { home: string; activities: string; calendar: string; more: string };
 type MorePageCopy = {
   more: string; organization: string; admin: string; visitor: string; notifications: string;
-  contact: string; documents: string; members: string; donations: string; payments: string;
-  chat: string; administration: string; login: string; settings: string;
+  contact: string; documents: string; members: string; chat: string; administration: string; login: string; settings: string;
 };
 type CalendarCopy = {
   title: string; empty: string; today: string; activities: string;
@@ -25,12 +24,12 @@ const bottomNav: Record<AppUiLanguage, BottomNavCopy> = {
 };
 
 const morePage: Record<AppUiLanguage, MorePageCopy> = {
-  nb: { more: 'Mer', organization: 'Min organisasjon', admin: 'Administrator', visitor: 'Medlem eller besøkende', notifications: 'Varsler', contact: 'Kontakt', documents: 'Dokumenter', members: 'Medlemmer', donations: 'Eksterne betalingslenker', payments: 'Betalinger', chat: 'Chat', administration: 'Administrasjon', login: 'Logg inn', settings: 'Innstillinger og moduler' },
-  en: { more: 'More', organization: 'My organization', admin: 'Administrator', visitor: 'Member or visitor', notifications: 'Notifications', contact: 'Contact', documents: 'Documents', members: 'Members', donations: 'External payment links', payments: 'Payments', chat: 'Chat', administration: 'Administration', login: 'Sign in', settings: 'Settings and modules' },
-  da: { more: 'Mere', organization: 'Min organisation', admin: 'Administrator', visitor: 'Medlem eller besøgende', notifications: 'Notifikationer', contact: 'Kontakt', documents: 'Dokumenter', members: 'Medlemmer', donations: 'Eksterne betalingslinks', payments: 'Betalinger', chat: 'Chat', administration: 'Administration', login: 'Log ind', settings: 'Indstillinger og moduler' },
-  tr: { more: 'Daha fazla', organization: 'Kuruluşum', admin: 'Yönetici', visitor: 'Üye veya ziyaretçi', notifications: 'Bildirimler', contact: 'İletişim', documents: 'Belgeler', members: 'Üyeler', donations: 'Harici ödeme bağlantıları', payments: 'Ödemeler', chat: 'Sohbet', administration: 'Yönetim', login: 'Giriş yap', settings: 'Ayarlar ve modüller' },
-  ar: { more: 'المزيد', organization: 'مؤسستي', admin: 'مسؤول', visitor: 'عضو أو زائر', notifications: 'الإشعارات', contact: 'اتصل بنا', documents: 'المستندات', members: 'الأعضاء', donations: 'روابط دفع خارجية', payments: 'المدفوعات', chat: 'الدردشة', administration: 'الإدارة', login: 'تسجيل الدخول', settings: 'الإعدادات والوحدات' },
-  ur: { more: 'مزید', organization: 'میری تنظیم', admin: 'ایڈمن', visitor: 'رکن یا وزیٹر', notifications: 'اطلاعات', contact: 'رابطہ', documents: 'دستاویزات', members: 'ارکان', donations: 'بیرونی ادائیگی لنکس', payments: 'ادائیگیاں', chat: 'چیٹ', administration: 'انتظامیہ', login: 'لاگ اِن', settings: 'ترتیبات اور ماڈیولز' },
+  nb: { more: 'Mer', organization: 'Min organisasjon', admin: 'Administrator', visitor: 'Medlem eller besøkende', notifications: 'Varsler', contact: 'Kontakt', documents: 'Dokumenter', members: 'Medlemmer', chat: 'Chat', administration: 'Administrasjon', login: 'Logg inn', settings: 'Innstillinger og moduler' },
+  en: { more: 'More', organization: 'My organization', admin: 'Administrator', visitor: 'Member or visitor', notifications: 'Notifications', contact: 'Contact', documents: 'Documents', members: 'Members', chat: 'Chat', administration: 'Administration', login: 'Sign in', settings: 'Settings and modules' },
+  da: { more: 'Mere', organization: 'Min organisation', admin: 'Administrator', visitor: 'Medlem eller besøgende', notifications: 'Notifikationer', contact: 'Kontakt', documents: 'Dokumenter', members: 'Medlemmer', chat: 'Chat', administration: 'Administration', login: 'Log ind', settings: 'Indstillinger og moduler' },
+  tr: { more: 'Daha fazla', organization: 'Kuruluşum', admin: 'Yönetici', visitor: 'Üye veya ziyaretçi', notifications: 'Bildirimler', contact: 'İletişim', documents: 'Belgeler', members: 'Üyeler', chat: 'Sohbet', administration: 'Yönetim', login: 'Giriş yap', settings: 'Ayarlar ve modüller' },
+  ar: { more: 'المزيد', organization: 'مؤسستي', admin: 'مسؤول', visitor: 'عضو أو زائر', notifications: 'الإشعارات', contact: 'اتصل بنا', documents: 'المستندات', members: 'الأعضاء', chat: 'الدردشة', administration: 'الإدارة', login: 'تسجيل الدخول', settings: 'الإعدادات والوحدات' },
+  ur: { more: 'مزید', organization: 'میری تنظیم', admin: 'ایڈمن', visitor: 'رکن یا وزیٹر', notifications: 'اطلاعات', contact: 'رابطہ', documents: 'دستاویزات', members: 'ارکان', chat: 'چیٹ', administration: 'انتظامیہ', login: 'لاگ اِن', settings: 'ترتیبات اور ماڈیولز' },
 };
 
 const calendar: Record<AppUiLanguage, CalendarCopy> = {
