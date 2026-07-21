@@ -1,9 +1,8 @@
 // Yasaflow Service Worker — push notifications + safe update caching
-const CACHE_NAME = 'yasaflow-v20';
+const CACHE_NAME = 'yasaflow-v21';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.svg',
-  '/images/dtim-logo.svg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -65,10 +64,12 @@ self.addEventListener('push', (event) => {
   const targetUrl = new URL(data.url || '/', self.location.origin);
   if (messageId) targetUrl.searchParams.set('notification', messageId);
 
+  const icon = data.icon || '/favicon.svg';
+  const badge = data.badge || icon;
   const options = {
     body: data.body || 'Yeni bildirim var.',
-    icon: '/images/dtim-logo.svg',
-    badge: '/images/dtim-logo.svg',
+    icon,
+    badge,
     tag: messageId ? `yasaflow-${messageId}` : undefined,
     data: {
       url: `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`,
