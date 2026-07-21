@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Check, Clock3, Loader2, X } from 'lucide-react';
 import { useAppI18n } from '../lib/appI18n';
 import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
@@ -20,6 +20,11 @@ export function NotificationsPage({ initialMessageId, onConsumedInitialMessage }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [, forceReadRefresh] = useState(0);
+  const onConsumedInitialMessageRef = useRef(onConsumedInitialMessage);
+
+  useEffect(() => {
+    onConsumedInitialMessageRef.current = onConsumedInitialMessage;
+  }, [onConsumedInitialMessage]);
 
   const refreshMessages = useCallback(async (showLoader = false) => {
     if (showLoader) setLoading(true);
@@ -28,7 +33,8 @@ export function NotificationsPage({ initialMessageId, onConsumedInitialMessage }
       setMessages(data);
       setError('');
       return data;
-    } catch {
+    } catch (loadError) {
+      console.error('Failed to load notifications:', loadError);
       setError(text.error);
       return [] as PushMessage[];
     } finally {
@@ -45,7 +51,7 @@ export function NotificationsPage({ initialMessageId, onConsumedInitialMessage }
         markPushMessageRead(match.id);
         setSelected(match);
       }
-      onConsumedInitialMessage?.();
+      onConsumedInitialMessageRef.current?.();
     });
 
     const unsubscribe = subscribeToPushMessages(DEFAULT_ORGANIZATION_ID, () => {
@@ -56,7 +62,7 @@ export function NotificationsPage({ initialMessageId, onConsumedInitialMessage }
       alive = false;
       unsubscribe();
     };
-  }, [initialMessageId, onConsumedInitialMessage, refreshMessages]);
+  }, [initialMessageId, refreshMessages]);
 
   const openMessage = (message: PushMessage) => {
     markPushMessageRead(message.id);
@@ -64,9 +70,17 @@ export function NotificationsPage({ initialMessageId, onConsumedInitialMessage }
     setSelected(message);
   };
 
-  const formatDate = (value: string) => new Intl.DateTimeFormat(locale, {
-    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-  }).format(new Date(value));
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+      }).format(date);
+    } catch {
+      return date.toLocaleString();
+    }
+  };
 
   const unreadCount = useMemo(() => messages.filter((message) => !isPushMessageRead(message.id)).length, [messages, selected]);
 
