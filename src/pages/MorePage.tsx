@@ -1,11 +1,11 @@
-import { Bell, Building2, Contact, CreditCard, FileText, HandCoins, LogIn, MessageCircle, Settings, ShieldCheck, Users } from 'lucide-react';
+import { Bell, Building2, Contact, FileText, LogIn, MessageCircle, Settings, ShieldCheck, Users } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAppI18n } from '../lib/appI18n';
 import { getMorePageCopy } from '../lib/appUiCopy';
 import { useOrganizationModules } from '../lib/moduleEngine';
 import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
 
-export function MorePage({ onAdmin, onContact, onDonate, onNotifications, unreadNotifications = 0 }: { onAdmin: () => void; onContact: () => void; onDonate: () => void; onNotifications: () => void; unreadNotifications?: number }) {
+export function MorePage({ onAdmin, onContact, onNotifications, unreadNotifications = 0 }: { onAdmin: () => void; onContact: () => void; onNotifications: () => void; unreadNotifications?: number }) {
   const { isAdmin } = useApp();
   const { language, direction } = useAppI18n();
   const { enabled } = useOrganizationModules(DEFAULT_ORGANIZATION_ID);
@@ -15,8 +15,6 @@ export function MorePage({ onAdmin, onContact, onDonate, onNotifications, unread
     enabled('contact') && { label: text.contact, icon: Contact, action: onContact },
     enabled('documents') && { label: text.documents, icon: FileText },
     enabled('members') && { label: text.members, icon: Users },
-    enabled('donation') && { label: text.donations, icon: HandCoins, action: onDonate },
-    enabled('payments') && { label: text.payments, icon: CreditCard },
     enabled('chat') && { label: text.chat, icon: MessageCircle },
   ].filter(Boolean) as { label: string; icon: typeof Contact; action?: () => void; badge?: number }[];
 
