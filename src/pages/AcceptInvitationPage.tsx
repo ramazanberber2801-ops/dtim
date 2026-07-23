@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, KeyRound, LogIn, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { isValidPassword, PASSWORD_REQUIREMENT_MESSAGE } from '../lib/passwordPolicy';
 
 type InvitationInfo = {
   valid: true;
@@ -57,9 +58,9 @@ export function AcceptInvitationPage() {
 
   const accept = async () => {
     if (!supabase || !info || state === 'submitting') return;
-    if (password.length < 8) {
+    if (mode === 'create' && !isValidPassword(password)) {
       setState('error');
-      setMessage('Passordet må ha minst 8 tegn.');
+      setMessage(PASSWORD_REQUIREMENT_MESSAGE);
       return;
     }
     setState('submitting');
@@ -126,9 +127,10 @@ export function AcceptInvitationPage() {
           <button type="button" onClick={() => { setMode('login'); setMessage(''); setState('ready'); }} className={`rounded-xl px-3 py-2 text-sm font-medium ${mode === 'login' ? 'bg-white shadow-sm' : 'text-slate-600'}`}>Jeg har konto</button>
         </div>
         <label className="mt-5 block text-sm font-medium" htmlFor="invitation-password">Passord</label>
+        {mode === 'create' && <p className="mt-2 text-xs text-slate-500">{PASSWORD_REQUIREMENT_MESSAGE}</p>}
         <div className="relative mt-2">
           <KeyRound className="absolute left-3 top-3.5 text-slate-400" size={18} />
-          <input id="invitation-password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} disabled={state === 'submitting'} className="w-full rounded-2xl border border-slate-300 py-3 pl-10 pr-4 outline-none focus:border-slate-900 disabled:opacity-60" placeholder="Minst 8 tegn" />
+          <input id="invitation-password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} disabled={state === 'submitting'} minLength={mode === 'create' ? 6 : undefined} className="w-full rounded-2xl border border-slate-300 py-3 pl-10 pr-4 outline-none focus:border-slate-900 disabled:opacity-60" placeholder={mode === 'create' ? 'Minst 6 tegn + stor/liten/tall/tegn' : 'Passord'} />
         </div>
         <button type="button" onClick={() => void accept()} disabled={state === 'submitting'} className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white disabled:opacity-60">
           <LogIn size={18} />{state === 'submitting' ? 'Behandler...' : mode === 'login' ? 'Logg inn og godta' : 'Opprett konto og godta'}
