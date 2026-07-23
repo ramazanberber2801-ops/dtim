@@ -4,6 +4,7 @@ import { X, Loader2 } from 'lucide-react';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { supabase } from '../lib/supabase';
 import { useAppI18n } from '../lib/appI18n';
+import { isValidPassword, PASSWORD_REQUIREMENT_MESSAGE } from '../lib/passwordPolicy';
 
 export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { login } = useApp();
@@ -69,8 +70,8 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
     e.preventDefault();
     setError('');
 
-    if (newPassword.length < 6) {
-      setError(t('recovery.tooShort'));
+    if (!isValidPassword(newPassword)) {
+      setError(PASSWORD_REQUIREMENT_MESSAGE);
       return;
     }
 
@@ -156,6 +157,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
           ) : (
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <p className="text-xs theme-muted">{t('login.temporaryPassword')}</p>
+              <p className="text-xs theme-muted">{PASSWORD_REQUIREMENT_MESSAGE}</p>
               {error && <p className="text-red-500 text-xs">{error}</p>}
               <input
                 type={showNewPassword ? 'text' : 'password'}
@@ -163,6 +165,8 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
                 placeholder={t('recovery.password')}
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
+                minLength={6}
+                autoComplete="new-password"
                 required
               />
               <input
@@ -171,6 +175,8 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
                 placeholder={t('recovery.repeat')}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
+                minLength={6}
+                autoComplete="new-password"
                 required
               />
               <label className="flex items-center gap-2 text-xs theme-muted">
