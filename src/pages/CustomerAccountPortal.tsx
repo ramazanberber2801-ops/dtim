@@ -6,17 +6,50 @@ import { supabase } from '../lib/supabase';
 
 type WorkspaceView = 'chooser' | 'organizations' | 'clinics';
 
+type PortalHistoryState = {
+  yasaflowWorkspace?: WorkspaceView;
+};
+
 function WorkspaceChooser() {
-  const [view, setView] = useState<WorkspaceView>('chooser');
+  const initialView = ((window.history.state as PortalHistoryState | null)?.yasaflowWorkspace || 'chooser') as WorkspaceView;
+  const [view, setView] = useState<WorkspaceView>(initialView);
+
+  useEffect(() => {
+    const currentState = (window.history.state || {}) as PortalHistoryState;
+    if (!currentState.yasaflowWorkspace) {
+      window.history.replaceState({ ...currentState, yasaflowWorkspace: 'chooser' }, document.title, window.location.href);
+      setView('chooser');
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      const nextView = ((event.state as PortalHistoryState | null)?.yasaflowWorkspace || 'chooser') as WorkspaceView;
+      setView(nextView);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const openWorkspace = (nextView: WorkspaceView) => {
+    if (nextView === view) return;
+    const currentState = (window.history.state || {}) as PortalHistoryState;
+    window.history.pushState({ ...currentState, yasaflowWorkspace: nextView }, document.title, window.location.href);
+    setView(nextView);
+  };
+
+  const returnToChooser = () => {
+    if (view === 'chooser') return;
+    window.history.back();
+  };
 
   if (view === 'organizations') return <div>
     <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6">
-      <button onClick={() => setView('chooser')} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">← Tilbake til valg</button>
+      <button onClick={returnToChooser} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">← Tilbake til valg</button>
     </div>
     <OrganizationAdminPortal />
   </div>;
 
-  if (view === 'clinics') return <ClinicManagementPortal onBack={() => setView('chooser')} />;
+  if (view === 'clinics') return <ClinicManagementPortal onBack={returnToChooser} />;
 
   return <main className="mx-auto w-full max-w-6xl p-4 sm:p-8">
     <div className="rounded-3xl border bg-white p-6 shadow-sm sm:p-8">
@@ -24,12 +57,12 @@ function WorkspaceChooser() {
       <h1 className="mt-3 font-serif text-3xl font-semibold text-slate-950 sm:text-4xl">Hva vil du administrere?</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Velg arbeidsområdet du vil åpne. Du trenger ikke logge inn på nytt når du bytter.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <button onClick={() => setView('organizations')} className="rounded-3xl border border-sky-200 bg-sky-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
+        <button onClick={() => openWorkspace('organizations')} className="rounded-3xl border border-sky-200 bg-sky-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white"><Building2 size={23}/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Organisasjoner</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">Åpne organisasjonsoversikten og administrer organisasjoner, medlemmer, innhold og innstillinger.</p>
         </button>
-        <button onClick={() => setView('clinics')} className="rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
+        <button onClick={() => openWorkspace('clinics')} className="rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-600 text-white"><Sparkles size={23}/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Klinikker</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">Se alle klinikker, rediger opplysninger, abonnement og åpne klinikkens app.</p>
