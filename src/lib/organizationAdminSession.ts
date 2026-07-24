@@ -15,10 +15,33 @@ export type OrganizationAdminSession = {
   invitationStatus: string;
 };
 
+type OrganizationAdminRow = {
+  organization_id?: string | null;
+  display_name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  invitation_status?: string | null;
+  organizations?: unknown;
+};
+
 function organizationFromRelation(value: unknown) {
   if (Array.isArray(value)) return value[0] || null;
   if (value && typeof value === 'object') return value as Record<string, unknown>;
   return null;
+}
+
+function chooseAdminRow(rows: OrganizationAdminRow[] | null | undefined) {
+  if (!rows?.length) return null;
+
+  // A user can be connected to more than one organization. Prefer an accepted/active
+  // membership with a valid organization relation, then fall back to the first valid row.
+  const validRows = rows.filter((row) => row.organization_id && organizationFromRelation(row.organizations)?.id);
+  if (!validRows.length) return rows.find((row) => row.organization_id) || rows[0];
+
+  return (
+    validRows.find((row) => ['accepted', 'active'].includes(String(row.invitation_status || '').toLowerCase())) ||
+    validRows[0]
+  );
 }
 
 export async function resolveOrganizationAdminSession(): Promise<OrganizationAdminSession> {
@@ -33,26 +56,29 @@ export async function resolveOrganizationAdminSession(): Promise<OrganizationAdm
 
   const columns = 'organization_id, display_name, email, role, invitation_status, organizations(id, name, logo_url, status, subscription_status, subscription_plan, trial_started_at, trial_ends_at)';
 
-  let { data: adminRow, error: adminError } = await supabase
+  const userMemberships = await supabase
     .from('organization_admins')
     .select(columns)
-    .eq('user_id', user.id)
-    .maybeSingle();
+    .eq('user_id', user.id);
 
-  if (!adminRow && user.email) {
+  let adminRows = userMemberships.data as OrganizationAdminRow[] | null;
+  let adminError = userMemberships.error;
+
+  if ((!adminRows || adminRows.length === 0) && user.email) {
     const fallback = await supabase
       .from('organization_admins')
       .select(columns)
-      .eq('email', user.email.trim().toLowerCase())
-      .maybeSingle();
+      .ilike('email', user.email.trim());
 
-    adminRow = fallback.data;
+    adminRows = fallback.data as OrganizationAdminRow[] | null;
     adminError = fallback.error;
   }
 
   if (adminError) {
     throw new Error(`Kunne ikke hente organisasjonstilknytning: ${adminError.message}`);
   }
+
+  const adminRow = chooseAdminRow(adminRows);
 
   if (!adminRow?.organization_id) {
     throw new Error('Denne administratoren er ikke koblet til en organisasjon ennå.');
