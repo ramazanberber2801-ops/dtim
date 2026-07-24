@@ -47,7 +47,7 @@ function shouldShowRegistration() {
 }
 
 function shouldShowCustomerPortal() {
-  return ['/kunde', '/login', '/account', '/portal'].includes(window.location.pathname);
+  return ['/kunde', '/login', '/account', '/portal', '/owner'].includes(window.location.pathname);
 }
 
 function routeCustomerPortalAdminLink() {
@@ -63,12 +63,14 @@ async function start() {
   await restoreWebsiteOnboardingSession();
   if (!shouldShowRegistration() && !shouldShowCustomerPortal()) await resolveOrganizationFromHostname();
 
+  const forceOwner = window.location.pathname === '/owner';
+
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       {shouldShowRegistration() ? (
         <OrganizationRegistrationFlow />
       ) : shouldShowCustomerPortal() ? (
-        <AppI18nProvider><AppProvider><CustomerAccountPortal /></AppProvider></AppI18nProvider>
+        <AppI18nProvider><AppProvider><CustomerAccountPortal forceOwner={forceOwner} /></AppProvider></AppI18nProvider>
       ) : (
         <AppI18nProvider>
           <OwnerLanguageSelectorEnhancer />
